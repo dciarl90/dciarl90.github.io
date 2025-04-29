@@ -158,10 +158,7 @@ Name: crotchheight, dtype: float64</pre>
         var coll = document.getElementsByClassName("collapsible");
         var i;
         
-        // Open first section by default
-        coll[0].classList.add("active");
-        coll[0].nextElementSibling.style.maxHeight = coll[0].nextElementSibling.scrollHeight + "px";
-        
+        // Removed the code that automatically opened the first section
         for (i = 0; i < coll.length; i++) {
             coll[i].addEventListener("click", function() {
                 this.classList.toggle("active");
