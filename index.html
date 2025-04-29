@@ -22,19 +22,26 @@
         .secret-button {
             position: absolute;
             top: 50%;
-            left: 30%;
+            left: 50%;
             transform: translate(-50%, -50%);
-            width: 10%;
-            height: 10%;
-            opacity: 50;
+            width: 33%;
+            height: 33%;
+            background-color: rgba(46, 204, 113, 0.3); /* Semi-transparent green */
+            border: 2px solid #2ecc71;
+            border-radius: 50%; /* Circular button */
             cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .secret-button:hover {
+            background-color: rgba(46, 204, 113, 0.5); /* More opaque on hover */
+            box-shadow: 0 0 15px #2ecc71; /* Glow effect */
         }
     </style>
 </head>
 <body>
     <div class="donut-container">
         <img src="donut.jpg" alt="Donut">
-        <a href="legs.html" class="secret-button" aria-label="Secret Legs Analysis"></a>
+        <a href="legs.html" class="secret-button" aria-label="Legs Analysis"></a>
     </div>
 </body>
 </html>
