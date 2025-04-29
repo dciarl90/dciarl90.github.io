@@ -1,6 +1,40 @@
 <!DOCTYPE html>
 <html>
+<head>
+    <title>Donut Portal</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+        }
+        .donut-container {
+            position: relative;
+        }
+        .donut-container img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+        .secret-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 33%;
+            height: 33%;
+            opacity: 0;
+            cursor: pointer;
+        }
+    </style>
+</head>
 <body>
-    <img src="donut.jpg" alt="donut">
+    <div class="donut-container">
+        <img src="donut.jpg" alt="Donut">
+        <a href="legs.html" class="secret-button" aria-label="Secret Legs Analysis"></a>
+    </div>
 </body>
 </html>

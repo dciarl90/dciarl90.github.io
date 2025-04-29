@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Legs Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .collapsible {
+            background-color: #f1f1f1;
+            color: #333;
+            cursor: pointer;
+            padding: 15px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 16px;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+        .active, .collapsible:hover {
+            background-color: #ddd;
+        }
+        .content {
+            padding: 0 18px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.2s ease-out;
+            background-color: white;
+            border-radius: 0 0 4px 4px;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 20px auto;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .highlight {
+            background-color: #fffde7;
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+        nav {
+            text-align: center;
+            margin: 20px 0;
+        }
+        a {
+            color: #d35400;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Legs Analysis</h1>
+    
+    <nav>
+        <a href="index.html">Home</a> | 
+        <a href="legs.html">Legs Analysis</a>
+    </nav>
+
+    <button type="button" class="collapsible">Results - Ratio</button>
+    <div class="content">
+        <h2>Ratio</h2>
+        <pre>Army Stats:
+count    4082.000000
+mean        2.078512
+std         0.060762
+min         1.880753
+25%         2.038863
+50%         2.078645
+75%         2.118593
+max         2.299728
+Name: ratio_0, dtype: float64</pre>
+        
+        <p><strong>Dom Ratio:</strong> <span class="highlight">2.08</span></p>
+        <p><strong>Percent from mean:</strong> <span class="highlight">0.01%</span></p>
+        <p><strong>Percent from median:</strong> <span class="highlight">0.01%</span></p>
+        
+        <img src="IMAGE1.JPG" alt="Ratio visualization">
+    </div>
+
+    <button type="button" class="collapsible">Results - Stature</button>
+    <div class="content">
+        <h2>Stature</h2>
+        <pre>Army stats:
+count    4082.000000
+mean     1756.214601
+std        68.550788
+min      1491.000000
+25%      1710.000000
+50%      1755.000000
+75%      1802.000000
+max      1993.000000
+Name: stature_m, dtype: float64</pre>
+        
+        <p><strong>Dom Stature:</strong> <span class="highlight">1850 mm</span></p>
+        <p><strong>Percent from mean:</strong> <span class="highlight">18.49%</span></p>
+        <p><strong>Percent from median:</strong> <span class="highlight">18.49%</span></p>
+        
+        <img src="IMAGE2.JPG" alt="Stature visualization">
+    </div>
+
+    <button type="button" class="collapsible">Results - Crotch Height</button>
+    <div class="content">
+        <h2>Crotch Height</h2>
+        <pre>Army Stats:
+count    4082.000000
+mean      845.929936
+std        46.499156
+min       702.000000
+25%       814.000000
+50%       845.000000
+75%       876.000000
+max      1031.000000
+Name: crotchheight, dtype: float64</pre>
+        
+        <p><strong>Dom crotch height (mm):</strong> <span class="highlight">890</span></p>
+        <p><strong>Percent from mean:</strong> <span class="highlight">8.89%</span></p>
+        <p><strong>Percent from median:</strong> <span class="highlight">8.89%</span></p>
+        
+        <img src="IMAGE3.JPG" alt="Crotch height visualization">
+    </div>
+
+    <button type="button" class="collapsible">Results - Percentiles</button>
+    <div class="content">
+        <h2>Percentiles</h2>
+        <p><strong>Stature:</strong> <span class="highlight">91.43</span></p>
+        <p><strong>Crotch Height:</strong> <span class="highlight">83.19</span></p>
+        <p><strong>Ratio:</strong> <span class="highlight">62.5</span></p>
+    </div>
+
+    <script>
+        var coll = document.getElementsByClassName("collapsible");
+        var i;
+        
+        // Open first section by default
+        coll[0].classList.add("active");
+        coll[0].nextElementSibling.style.maxHeight = coll[0].nextElementSibling.scrollHeight + "px";
+        
+        for (i = 0; i < coll.length; i++) {
+            coll[i].addEventListener("click", function() {
+                this.classList.toggle("active");
+                var content = this.nextElementSibling;
+                if (content.style.maxHeight){
+                    content.style.maxHeight = null;
+                } else {
+                    content.style.maxHeight = content.scrollHeight + "px";
+                } 
+            });
+        }
+    </script>
+
+    <nav>
+        <a href="index.html">Back to Home</a>
+    </nav>
+</body>
+</html>
