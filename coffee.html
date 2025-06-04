@@ -47,6 +47,11 @@
             text-align: center;
             padding: 20px;
         }
+        .error {
+            color: red;
+            text-align: center;
+            padding: 20px;
+        }
     </style>
 </head>
 <body>
@@ -57,23 +62,42 @@
     </div>
 
     <script>
-        // Function to format date for display
+        // Function to safely parse and format date
         function formatDisplayDate(dateString) {
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            return new Date(dateString).toLocaleDateString('en-US', options);
+            try {
+                const dateParts = dateString.split('-');
+                if (dateParts.length !== 3) throw new Error('Invalid format');
+                
+                const dateObj = new Date(dateString);
+                if (isNaN(dateObj.getTime())) throw new Error('Invalid date');
+                
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                return dateObj.toLocaleDateString('en-US', options);
+            } catch (e) {
+                console.error('Date formatting error:', e);
+                return dateString; // Return raw string if can't format
+            }
         }
 
         // Function to check if date is in the past
         function isPastDate(dateString) {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            return new Date(dateString) < today;
+            try {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const dateObj = new Date(dateString);
+                return !isNaN(dateObj.getTime()) && dateObj < today;
+            } catch (e) {
+                console.error('Date comparison error:', e);
+                return false;
+            }
         }
 
         // Function to parse CSV data
         function parseCSV(csvText) {
             const lines = csvText.split('\n');
-            const headers = lines[0].split('\t');
+            if (lines.length < 1) return [];
+            
+            const headers = lines[0].split('\t').map(h => h.trim());
             const result = [];
             
             for (let i = 1; i < lines.length; i++) {
@@ -83,10 +107,17 @@
                 const currentline = lines[i].split('\t');
                 
                 for (let j = 0; j < headers.length; j++) {
-                    obj[headers[j].trim()] = currentline[j] ? currentline[j].trim() : '';
+                    if (j < currentline.length) {
+                        obj[headers[j]] = currentline[j] ? currentline[j].trim() : '';
+                    } else {
+                        obj[headers[j]] = '';
+                    }
                 }
                 
-                result.push(obj);
+                // Validate required fields
+                if (obj.name && obj.date) {
+                    result.push(obj);
+                }
             }
             
             return result;
@@ -96,34 +127,38 @@
         async function loadCoffeeShops() {
             try {
                 const response = await fetch('coffee_tours.csv');
-                if (!response.ok) throw new Error('Failed to load CSV file');
+                if (!response.ok) throw new Error('CSV file not found');
                 
                 const csvText = await response.text();
                 const coffeeShops = parseCSV(csvText);
                 
-                // Sort by date
-                coffeeShops.sort((a, b) => new Date(a.date) - new Date(b.date));
+                if (coffeeShops.length === 0) {
+                    throw new Error('No valid coffee shop data found');
+                }
+                
+                // Sort by date (invalid dates will sort to beginning)
+                coffeeShops.sort((a, b) => {
+                    const dateA = new Date(a.date);
+                    const dateB = new Date(b.date);
+                    return dateA - dateB;
+                });
                 
                 // Display coffee shops
                 const container = document.getElementById('coffee-tours-container');
                 container.innerHTML = '';
                 
-                if (coffeeShops.length === 0) {
-                    container.innerHTML = '<div class="coffee-shop">No coffee tours scheduled</div>';
-                    return;
-                }
-                
                 coffeeShops.forEach(shop => {
                     const shopElement = document.createElement('div');
-                    shopElement.className = `coffee-shop ${isPastDate(shop.date) ? 'past' : ''}`;
+                    const isPast = isPastDate(shop.date);
+                    shopElement.className = `coffee-shop ${isPast ? 'past' : ''}`;
                     
                     shopElement.innerHTML = `
-                        <div class="name">${shop.name}</div>
+                        <div class="name">${shop.name || 'Unnamed Coffee Shop'}</div>
                         <div class="date-time">
                             <span class="date">${formatDisplayDate(shop.date)}</span>
-                            <span class="time">${shop.time}</span>
+                            <span class="time">${shop.time || ''}</span>
                         </div>
-                        <div class="address">${shop.address}</div>
+                        ${shop.address ? `<div class="address">${shop.address}</div>` : ''}
                     `;
                     
                     container.appendChild(shopElement);
@@ -131,7 +166,7 @@
             } catch (error) {
                 console.error('Error:', error);
                 document.getElementById('coffee-tours-container').innerHTML = 
-                    `<div class="coffee-shop">Error loading coffee tours: ${error.message}</div>`;
+                    `<div class="error">Error loading coffee tours: ${error.message}</div>`;
             }
         }
 
