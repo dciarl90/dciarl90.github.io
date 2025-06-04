@@ -62,7 +62,7 @@
 
         async function loadCoffeeShops() {
             try {
-                const response = await fetch('coffee_tours.csv');
+                const response = await fetch('coffee_tours.txt');
                 if (!response.ok) throw new Error('CSV file not found');
                 
                 const csvText = await response.text();
