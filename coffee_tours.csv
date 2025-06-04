@@ -1,38 +1,38 @@
-﻿name,address,date,time,lat,long
-The Red Moose Cafe,"""1693 900 E, Salt Lake City, UT 84105""",6/9/2025,8:00 AM,40.7337705,-111.8648311
-Picnic Cafe,"""1329 S 500 E, Salt Lake City, UT 84105""",6/10/2025,8:00 AM,40.7408888,-111.8765789
-The Bird Feeder CafÃ©,"""520 E, Salt Lake City, UT 84105""",6/11/2025,9:00 AM,40.7433805,-111.876137
-Roots Coffee Sugar House,"""1386 S 1100 E, Salt Lake City, UT 84105""",6/12/2025,8:00 AM,40.7396362,-111.8599733
-Alchemy Coffee,"""390 E 1700 S, Salt Lake City, UT 84115""",6/13/2025,7:00 AM,40.7331511,-111.8798478
-Beans & Brews Coffee House,"""906 S 500 E, Salt Lake City, UT 84111""",6/14/2025,6:30 AM,40.7256052,-111.8704081
-Tea Zaanti,"""1944 S 1100 E, Salt Lake City, UT 84106""",6/15/2025,9:00 AM,40.7279491,-111.859981
-Rawbean Coffee,"""611 W Temple, Salt Lake City, UT 84101""",6/16/2025,6:30 AM,40.7251875,-111.8736264
-Coffee Garden,"""878 E 900 S, Salt Lake City, UT 84105""",6/17/2025,7:00 AM,40.7495595,-111.8658001
-CaffÃ© Expresso,"""902 S 1100 E, Salt Lake City, UT 84105""",6/18/2025,6:30 AM,40.7495338,-111.8598402
-Loki Coffee,"""325 E 900 S, Salt Lake City, UT 84111""",6/19/2025,7:00 AM,40.7500217,-111.88155
-The Honeysuckle Coffee Co.,"""1588 S Main St #101, Salt Lake City, UT 84115""",6/20/2025,8:00 AM,40.7350535,-111.8914758
-URBAN SAILOR COFFEE sugar house,"""1327 E 2100 S #102, Salt Lake City, UT 84105""",6/21/2025,8:00 AM,40.7259635,-111.8526965
-Tulie Bakery,"""863 E 700 S, Salt Lake City, UT 84102""",6/22/2025,8:00 AM,40.7543339,-111.8660649
-Java Jo's,"""877 S 1300 E, Salt Lake City, UT 84102""",6/23/2025,6:30 AM,40.7500332,-111.8536024
-Bjorn's Brew,"""2165 State St, South Salt Lake, UT 84115""",6/24/2025,6:00 AM,40.723778,-111.8877868
-Publik Coffee Roasters,"""975 S W Temple St, Salt Lake City, UT 84101""",6/25/2025,8:00 AM,40.7479052,-111.8933594
-Logos Coffee,"""1709 E 1300 S, Salt Lake City, UT 84108""",6/26/2025,8:00 AM,40.7417781,-111.841914
-Blue Copper Coffee Room,"""179 W 900 S, Salt Lake City, UT 84101""",6/27/2025,9:00 AM,40.7495221,-111.8963504
-Millcreek Coffee Roasters,"""657 S Main St, Salt Lake City, UT 84111""",6/28/2025,8:00 AM,40.7548703,-111.8907007
-Sound Brew Coffee,"""202 E 500 S, Salt Lake City, UT 84111""",6/29/2025,7:00 AM,40.7582745,-111.885111
-Salt Lake Coffee Break,"""430 E 400 S, Salt Lake City, UT 84111""",6/30/2025,7:00 AM,40.760374,-111.8784658
-CafÃ© Niche,"""779 E 300 S, Salt Lake City, UT 84102""",7/1/2025,8:00 AM,40.7631034,-111.8685711
-The Coffee Shop at Little America Hotel,"""500 S Main St, Salt Lake City, UT 84101""",7/2/2025,6:00 AM,40.7578943,-111.8915496
-Cold Plunge Coffee,"""457 E 300 S Suite D, Salt Lake City, UT 84111""",7/3/2025,9:00 AM,40.7630562,-111.8775951
-Roots Coffee Salt Lake City,"""1386 S 1100 E, Salt Lake City, UT 84105""",7/4/2025,8:00 AM,40.7522769,-111.9001846
-Cozy Coffee Lounge,"""2580 S Main St, South Salt Lake, UT 84115""",7/5/2025,9:00 AM,40.7146389,-111.8912821
-Midway Coffee,"""270 S 300 E, Salt Lake City, UT 84111""",7/6/2025,7:30 AM,40.7633373,-111.8829568
-Coffee Noir,"""1035 E 200 S, Salt Lake City, UT 84102""",7/7/2025,7:00 AM,40.7651994,-111.8612202
-Culture Coffee,"""285 N 900 W, Salt Lake City, UT 84116""",7/8/2025,8:00 AM,,
-Un Cafecito SLC,"""838 W North Temple St A, Salt Lake City, UT 84116""",7/9/2025,8:00 AM,,
-Mestizo Coffee House,"""631 North Temple, Salt Lake City, UT 84116""",7/10/2025,8:00 AM,,
-La Barba Coffee,"""9 S Rio Grande St, Salt Lake City, UT 84101""",7/11/2025,8:00 AM,,
-Kings Peak Coffee Roasters Greenprint,"""592 W 200 S #120, Salt Lake City, UT 84101""",7/12/2025,8:00 AM,,
-The Rose Establishment,"""235 400 W, Salt Lake City, UT 84101""",7/13/2025,8:00 AM,,
-Three Pines Coffee,"""165 S Main St, Salt Lake City, UT 84111""",7/14/2025,8:00 AM,,
-The People's Coffee,"""177 E 200 S, Salt Lake City, UT 84111""",7/15/2025,8:00 AM,,
+﻿name,address,date,time
+The Red Moose Cafe,"""1693 900 E, Salt Lake City, UT 84105""",6/9/2025,8:00 AM
+Picnic Cafe,"""1329 S 500 E, Salt Lake City, UT 84105""",6/10/2025,8:00 AM
+The Bird Feeder CafÃ©,"""520 E, Salt Lake City, UT 84105""",6/11/2025,9:00 AM
+Roots Coffee Sugar House,"""1386 S 1100 E, Salt Lake City, UT 84105""",6/12/2025,8:00 AM
+Alchemy Coffee,"""390 E 1700 S, Salt Lake City, UT 84115""",6/13/2025,7:00 AM
+Beans & Brews Coffee House,"""906 S 500 E, Salt Lake City, UT 84111""",6/14/2025,6:30 AM
+Tea Zaanti,"""1944 S 1100 E, Salt Lake City, UT 84106""",6/15/2025,9:00 AM
+Rawbean Coffee,"""611 W Temple, Salt Lake City, UT 84101""",6/16/2025,6:30 AM
+Coffee Garden,"""878 E 900 S, Salt Lake City, UT 84105""",6/17/2025,7:00 AM
+CaffÃ© Expresso,"""902 S 1100 E, Salt Lake City, UT 84105""",6/18/2025,6:30 AM
+Loki Coffee,"""325 E 900 S, Salt Lake City, UT 84111""",6/19/2025,7:00 AM
+The Honeysuckle Coffee Co.,"""1588 S Main St #101, Salt Lake City, UT 84115""",6/20/2025,8:00 AM
+URBAN SAILOR COFFEE sugar house,"""1327 E 2100 S #102, Salt Lake City, UT 84105""",6/21/2025,8:00 AM
+Tulie Bakery,"""863 E 700 S, Salt Lake City, UT 84102""",6/22/2025,8:00 AM
+Java Jo's,"""877 S 1300 E, Salt Lake City, UT 84102""",6/23/2025,6:30 AM
+Bjorn's Brew,"""2165 State St, South Salt Lake, UT 84115""",6/24/2025,6:00 AM
+Publik Coffee Roasters,"""975 S W Temple St, Salt Lake City, UT 84101""",6/25/2025,8:00 AM
+Logos Coffee,"""1709 E 1300 S, Salt Lake City, UT 84108""",6/26/2025,8:00 AM
+Blue Copper Coffee Room,"""179 W 900 S, Salt Lake City, UT 84101""",6/27/2025,9:00 AM
+Millcreek Coffee Roasters,"""657 S Main St, Salt Lake City, UT 84111""",6/28/2025,8:00 AM
+Sound Brew Coffee,"""202 E 500 S, Salt Lake City, UT 84111""",6/29/2025,7:00 AM
+Salt Lake Coffee Break,"""430 E 400 S, Salt Lake City, UT 84111""",6/30/2025,7:00 AM
+CafÃ© Niche,"""779 E 300 S, Salt Lake City, UT 84102""",7/1/2025,8:00 AM
+The Coffee Shop at Little America Hotel,"""500 S Main St, Salt Lake City, UT 84101""",7/2/2025,6:00 AM
+Cold Plunge Coffee,"""457 E 300 S Suite D, Salt Lake City, UT 84111""",7/3/2025,9:00 AM
+Roots Coffee Salt Lake City,"""1386 S 1100 E, Salt Lake City, UT 84105""",7/4/2025,8:00 AM
+Cozy Coffee Lounge,"""2580 S Main St, South Salt Lake, UT 84115""",7/5/2025,9:00 AM
+Midway Coffee,"""270 S 300 E, Salt Lake City, UT 84111""",7/6/2025,7:30 AM
+Coffee Noir,"""1035 E 200 S, Salt Lake City, UT 84102""",7/7/2025,7:00 AM
+Culture Coffee,"""285 N 900 W, Salt Lake City, UT 84116""",7/8/2025,8:00 AM
+Un Cafecito SLC,"""838 W North Temple St A, Salt Lake City, UT 84116""",7/9/2025,8:00 AM
+Mestizo Coffee House,"""631 North Temple, Salt Lake City, UT 84116""",7/10/2025,8:00 AM
+La Barba Coffee,"""9 S Rio Grande St, Salt Lake City, UT 84101""",7/11/2025,8:00 AM
+Kings Peak Coffee Roasters Greenprint,"""592 W 200 S #120, Salt Lake City, UT 84101""",7/12/2025,8:00 AM
+The Rose Establishment,"""235 400 W, Salt Lake City, UT 84101""",7/13/2025,8:00 AM
+Three Pines Coffee,"""165 S Main St, Salt Lake City, UT 84111""",7/14/2025,8:00 AM
+The People's Coffee,"""177 E 200 S, Salt Lake City, UT 84111""",7/15/2025,8:00 AM
