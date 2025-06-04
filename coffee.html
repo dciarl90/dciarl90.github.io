@@ -3,174 +3,80 @@
 <head>
     <title>Sunday Morning Coffee Tour</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-            color: #333;
-        }
-        h1 {
-            color: #6F4E37;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .coffee-shop {
-            background-color: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .coffee-shop.past {
-            text-decoration: line-through;
-            color: #999;
-            background-color: #f0f0f0;
-        }
-        .name {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #6F4E37;
-            margin-bottom: 5px;
-        }
-        .date-time {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-        }
-        .address {
-            font-style: italic;
-            color: #666;
-        }
-        .loading {
-            text-align: center;
-            padding: 20px;
-        }
-        .error {
+        /* [Keep all your existing styles] */
+        .date-error {
             color: red;
-            text-align: center;
-            padding: 20px;
+            font-size: 0.8em;
         }
     </style>
 </head>
 <body>
     <h1>Sunday Morning Coffee Tour</h1>
-    
     <div id="coffee-tours-container">
         <div class="loading">Loading coffee tours...</div>
     </div>
 
     <script>
-        // Function to safely parse and format date
+        // Robust date parser that handles multiple formats
+        function parseDate(dateString) {
+            // Try ISO format first (YYYY-MM-DD)
+            let date = new Date(dateString);
+            if (!isNaN(date.getTime())) return date;
+            
+            // Try other common formats if needed
+            date = new Date(dateString.replace(/(\d+)\/(\d+)\/(\d+)/, '$3-$1-$2'));
+            return isNaN(date.getTime()) ? null : date;
+        }
+
+        // Format date for display with validation
         function formatDisplayDate(dateString) {
-            try {
-                const dateParts = dateString.split('-');
-                if (dateParts.length !== 3) throw new Error('Invalid format');
-                
-                const dateObj = new Date(dateString);
-                if (isNaN(dateObj.getTime())) throw new Error('Invalid date');
-                
-                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-                return dateObj.toLocaleDateString('en-US', options);
-            } catch (e) {
-                console.error('Date formatting error:', e);
-                return dateString; // Return raw string if can't format
+            const date = parseDate(dateString);
+            if (!date) {
+                return `<span>${dateString} <span class="date-error">(Invalid Date)</span></span>`;
             }
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return date.toLocaleDateString('en-US', options);
         }
 
-        // Function to check if date is in the past
+        // Check if date is in the past (with validation)
         function isPastDate(dateString) {
-            try {
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const dateObj = new Date(dateString);
-                return !isNaN(dateObj.getTime()) && dateObj < today;
-            } catch (e) {
-                console.error('Date comparison error:', e);
-                return false;
-            }
+            const date = parseDate(dateString);
+            if (!date) return false;
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            return date < today;
         }
 
-        // Function to parse CSV data
-        function parseCSV(csvText) {
-            const lines = csvText.split('\n');
-            if (lines.length < 1) return [];
-            
-            const headers = lines[0].split('\t').map(h => h.trim());
-            const result = [];
-            
-            for (let i = 1; i < lines.length; i++) {
-                if (!lines[i].trim()) continue;
-                
-                const obj = {};
-                const currentline = lines[i].split('\t');
-                
-                for (let j = 0; j < headers.length; j++) {
-                    if (j < currentline.length) {
-                        obj[headers[j]] = currentline[j] ? currentline[j].trim() : '';
-                    } else {
-                        obj[headers[j]] = '';
-                    }
-                }
-                
-                // Validate required fields
-                if (obj.name && obj.date) {
-                    result.push(obj);
-                }
-            }
-            
-            return result;
-        }
-
-        // Load and display coffee shop data
+        // [Keep your existing parseCSV() and loadCoffeeShops() functions]
+        // But add this validation in loadCoffeeShops():
         async function loadCoffeeShops() {
             try {
                 const response = await fetch('coffee_tours.csv');
-                if (!response.ok) throw new Error('CSV file not found');
+                if (!response.ok) throw new Error('Failed to load CSV file');
                 
                 const csvText = await response.text();
                 const coffeeShops = parseCSV(csvText);
                 
-                if (coffeeShops.length === 0) {
-                    throw new Error('No valid coffee shop data found');
-                }
-                
-                // Sort by date (invalid dates will sort to beginning)
+                // Sort with invalid dates last
                 coffeeShops.sort((a, b) => {
-                    const dateA = new Date(a.date);
-                    const dateB = new Date(b.date);
+                    const dateA = parseDate(a.date) || new Date(8640000000000000);
+                    const dateB = parseDate(b.date) || new Date(8640000000000000);
                     return dateA - dateB;
                 });
-                
-                // Display coffee shops
-                const container = document.getElementById('coffee-tours-container');
-                container.innerHTML = '';
-                
-                coffeeShops.forEach(shop => {
-                    const shopElement = document.createElement('div');
-                    const isPast = isPastDate(shop.date);
-                    shopElement.className = `coffee-shop ${isPast ? 'past' : ''}`;
-                    
-                    shopElement.innerHTML = `
-                        <div class="name">${shop.name || 'Unnamed Coffee Shop'}</div>
-                        <div class="date-time">
-                            <span class="date">${formatDisplayDate(shop.date)}</span>
-                            <span class="time">${shop.time || ''}</span>
-                        </div>
-                        ${shop.address ? `<div class="address">${shop.address}</div>` : ''}
-                    `;
-                    
-                    container.appendChild(shopElement);
-                });
+
+                // [Rest of your existing display code]
             } catch (error) {
                 console.error('Error:', error);
                 document.getElementById('coffee-tours-container').innerHTML = 
-                    `<div class="error">Error loading coffee tours: ${error.message}</div>`;
+                    `<div class="error">
+                        <p>Error loading coffee tours</p>
+                        <p><small>${error.message}</small></p>
+                        <p><small>Check your CSV format and ensure dates are YYYY-MM-DD</small></p>
+                    </div>`;
             }
         }
 
-        // Load the data when page loads
         window.addEventListener('DOMContentLoaded', loadCoffeeShops);
     </script>
 </body>
