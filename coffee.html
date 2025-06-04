@@ -14,6 +14,7 @@
             color: black;
         }
         h1 {
+            font-size: 4;
             color: rgb(0, 0, 0);
             text-align: center;
             margin-bottom: 30px;
@@ -44,24 +45,6 @@
         .address {
             font-style: normal;
         }
-        #debug-console {
-            margin-top: 30px;
-            padding: 15px;
-            background-color: #f0f0f0;
-            border-radius: 5px;
-            font-family: monospace;
-            white-space: pre;
-            display: none;
-        }
-        #debug-toggle {
-            background: #6F4E37;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
         .error {
             color: #d9534f;
             font-weight: bold;
@@ -71,46 +54,9 @@
 <body>
     <h1>SUNDAY MORNING COFFEE TOUR</h1>
     <div id="coffee-tours"></div>
-    
-    <!-- <button id="debug-toggle">Show Debug Info</button> -->
-    <!-- <div id="debug-console"></div> -->
 
     <script>
-        // Debugging state
-        const debug = {
-            enabled: false,
-            log: [],
-            toggle: function() {
-                this.enabled = !this.enabled;
-                const consoleEl = document.getElementById('debug-console');
-                const buttonEl = document.getElementById('debug-toggle');
-                
-                if (this.enabled) {
-                    consoleEl.style.display = 'block';
-                    buttonEl.textContent = 'Hide Debug Info';
-                    this.updateConsole();
-                } else {
-                    consoleEl.style.display = 'none';
-                    buttonEl.textContent = 'Show Debug Info';
-                }
-            },
-            add: function(message) {
-                const timestamp = new Date().toISOString();
-                this.log.push(`${timestamp}: ${message}`);
-                if (this.enabled) {
-                    this.updateConsole();
-                }
-            },
-            updateConsole: function() {
-                document.getElementById('debug-console').textContent = this.log.join('\n');
-            }
-        };
-
         document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('debug-toggle').addEventListener('click', () => debug.toggle());
-            
-            debug.add('Page loaded, starting data fetch...');
-            
             fetch('coffee_tours.csv')
                 .then(response => {
                     if (!response.ok) {
@@ -119,23 +65,10 @@
                     return response.text();
                 })
                 .then(data => {
-                    debug.add('CSV file loaded successfully');
-                    debug.add(`Raw CSV data (first 200 chars):\n${data.substring(0, 200)}...`);
-                    
                     const tours = parseCSV(data);
-                    debug.add(`Parsed ${tours.length} tours`);
-                    
-                    if (tours.length > 0) {
-                        debug.add('Sample tour data:');
-                        debug.add(JSON.stringify(tours[0], null, 2));
-                    }
-                    
                     displayTours(tours);
                 })
                 .catch(error => {
-                    debug.add(`Error: ${error.message}`);
-                    debug.add(`Stack trace: ${error.stack}`);
-                    
                     const container = document.getElementById('coffee-tours');
                     container.innerHTML = `
                         <div class="error">
@@ -145,35 +78,25 @@
                                 <li>Does the CSV file contain data in the correct format?</li>
                                 <li>Are you running this through a local web server? Some browsers block local file access.</li>
                             </ul>
-                            <p>Check debug console for more details.</p>
                         </div>
                     `;
-                    
-                    debug.enabled = true;
-                    debug.toggle();
                 });
         });
 
         function parseCSV(csvText) {
-            debug.add('Starting CSV parsing...');
-            
             csvText = csvText.replace(/\r\n/g, '\n').trim();
             const lines = csvText.split('\n');
-            debug.add(`Found ${lines.length} lines in CSV`);
             
             if (lines.length < 2) {
-                debug.add('Error: CSV file has less than 2 lines (header + data)');
                 return [];
             }
             
             // Parse header
             const headers = parseCSVLine(lines[0]);
-            debug.add(`Headers found: ${headers.join(', ')}`);
             
             const expectedHeaders = ['name', 'address', 'date', 'time'];
             if (headers.length !== expectedHeaders.length || 
                 !headers.every((h, i) => h.toLowerCase() === expectedHeaders[i])) {
-                debug.add(`Error: CSV headers don't match expected format. Found: ${headers.join(', ')}`);
                 return [];
             }
             
@@ -181,22 +104,16 @@
             
             for (let i = 1; i < lines.length; i++) {
                 const line = lines[i].trim();
-                if (line === '') {
-                    debug.add(`Line ${i+1}: Empty line skipped`);
-                    continue;
-                }
+                if (line === '') continue;
                 
                 const values = parseCSVLine(line);
                 
-                if (values.length < 4) {
-                    debug.add(`Line ${i+1}: Skipping - only ${values.length} values found`);
-                    continue;
-                }
+                if (values.length < 4) continue;
                 
                 try {
                     const tour = {
                         name: values[0].trim(),
-                        address: values[1].trim().replace(/^"+|"+$/g, ''), // Remove surrounding quotes
+                        address: values[1].trim().replace(/^"+|"+$/g, ''),
                         date: values[2].trim(),
                         time: values[3].trim()
                     };
@@ -204,22 +121,18 @@
                     // Validate date format (MM/DD/YYYY)
                     const dateParts = tour.date.split('/');
                     if (dateParts.length !== 3 || isNaN(new Date(tour.date).getTime())) {
-                        debug.add(`Line ${i+1}: Invalid date format "${tour.date}"`);
                         continue;
                     }
                     
                     tours.push(tour);
-                    debug.add(`Line ${i+1}: Added tour "${tour.name}"`);
                 } catch (e) {
-                    debug.add(`Line ${i+1}: Error parsing - ${e.message}`);
+                    continue;
                 }
             }
             
-            debug.add(`Successfully parsed ${tours.length} tours`);
             return tours;
         }
 
-        // Improved CSV line parser that handles quoted fields with commas
         function parseCSVLine(line) {
             const result = [];
             let inQuotes = false;
@@ -229,10 +142,8 @@
                 const char = line[i];
                 
                 if (char === '"') {
-                    // Toggle quote state
                     inQuotes = !inQuotes;
                 } else if (char === ',' && !inQuotes) {
-                    // Comma outside quotes - field separator
                     result.push(currentField);
                     currentField = '';
                 } else {
@@ -240,17 +151,12 @@
                 }
             }
             
-            // Add the last field
             result.push(currentField);
-            
             return result;
         }
 
         function displayTours(tours) {
-            debug.add('Starting tour display...');
-            
             if (tours.length === 0) {
-                debug.add('No tours to display');
                 document.getElementById('coffee-tours').innerHTML = 
                     '<p>No tour data available. Check CSV file format.</p>';
                 return;
@@ -263,17 +169,13 @@
                 return dateA - dateB;
             });
             
-            debug.add('Tours sorted by date');
-            
             const container = document.getElementById('coffee-tours');
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            debug.add(`Today's date for comparison: ${today.toISOString()}`);
             
             tours.forEach(tour => {
                 const tourDate = new Date(tour.date);
                 const isPast = tourDate < today;
-                debug.add(`Processing "${tour.name}" - Date: ${tourDate.toISOString()} - isPast: ${isPast}`);
                 
                 const tourElement = document.createElement('div');
                 tourElement.className = `coffee-shop ${isPast ? 'past' : ''}`;
@@ -286,8 +188,6 @@
                 
                 container.appendChild(tourElement);
             });
-            
-            debug.add(`Displayed ${tours.length} tours`);
         }
 
         function formatDate(date) {
