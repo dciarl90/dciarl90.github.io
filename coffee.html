@@ -106,7 +106,6 @@
         };
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Set up debug toggle button
             document.getElementById('debug-toggle').addEventListener('click', () => debug.toggle());
             
             debug.add('Page loaded, starting data fetch...');
@@ -149,7 +148,6 @@
                         </div>
                     `;
                     
-                    // Force show debug console on error
                     debug.enabled = true;
                     debug.toggle();
                 });
@@ -158,9 +156,7 @@
         function parseCSV(csvText) {
             debug.add('Starting CSV parsing...');
             
-            // Normalize line endings and trim
             csvText = csvText.replace(/\r\n/g, '\n').trim();
-            
             const lines = csvText.split('\n');
             debug.add(`Found ${lines.length} lines in CSV`);
             
@@ -169,58 +165,84 @@
                 return [];
             }
             
-            const headers = lines[0].split('\t');
+            // Parse header
+            const headers = parseCSVLine(lines[0]);
             debug.add(`Headers found: ${headers.join(', ')}`);
             
             const expectedHeaders = ['name', 'address', 'date', 'time'];
-            if (!expectedHeaders.every(h => headers.includes(h))) {
+            if (headers.length !== expectedHeaders.length || 
+                !headers.every((h, i) => h.toLowerCase() === expectedHeaders[i])) {
                 debug.add(`Error: CSV headers don't match expected format. Found: ${headers.join(', ')}`);
                 return [];
             }
             
             const tours = [];
-            let lineNumber = 1; // Start after header
             
             for (let i = 1; i < lines.length; i++) {
-                lineNumber++;
                 const line = lines[i].trim();
                 if (line === '') {
-                    debug.add(`Line ${lineNumber}: Empty line skipped`);
+                    debug.add(`Line ${i+1}: Empty line skipped`);
                     continue;
                 }
                 
-                // Split on tabs but handle cases where address might contain tabs
-                // This is a simplified approach - for more complex cases consider a proper CSV parser
-                const values = line.split('\t');
+                const values = parseCSVLine(line);
                 
                 if (values.length < 4) {
-                    debug.add(`Line ${lineNumber}: Skipping - only ${values.length} values found`);
+                    debug.add(`Line ${i+1}: Skipping - only ${values.length} values found`);
                     continue;
                 }
                 
                 try {
                     const tour = {
                         name: values[0].trim(),
-                        address: values[1].trim(),
+                        address: values[1].trim().replace(/^"+|"+$/g, ''), // Remove surrounding quotes
                         date: values[2].trim(),
                         time: values[3].trim()
                     };
                     
-                    // Validate date format
-                    if (isNaN(new Date(tour.date).getTime())) {
-                        debug.add(`Line ${lineNumber}: Invalid date format "${tour.date}"`);
+                    // Validate date format (MM/DD/YYYY)
+                    const dateParts = tour.date.split('/');
+                    if (dateParts.length !== 3 || isNaN(new Date(tour.date).getTime())) {
+                        debug.add(`Line ${i+1}: Invalid date format "${tour.date}"`);
                         continue;
                     }
                     
                     tours.push(tour);
-                    debug.add(`Line ${lineNumber}: Added tour "${tour.name}"`);
+                    debug.add(`Line ${i+1}: Added tour "${tour.name}"`);
                 } catch (e) {
-                    debug.add(`Line ${lineNumber}: Error parsing - ${e.message}`);
+                    debug.add(`Line ${i+1}: Error parsing - ${e.message}`);
                 }
             }
             
             debug.add(`Successfully parsed ${tours.length} tours`);
             return tours;
+        }
+
+        // Improved CSV line parser that handles quoted fields with commas
+        function parseCSVLine(line) {
+            const result = [];
+            let inQuotes = false;
+            let currentField = '';
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    // Toggle quote state
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    // Comma outside quotes - field separator
+                    result.push(currentField);
+                    currentField = '';
+                } else {
+                    currentField += char;
+                }
+            }
+            
+            // Add the last field
+            result.push(currentField);
+            
+            return result;
         }
 
         function displayTours(tours) {
