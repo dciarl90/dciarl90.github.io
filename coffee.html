@@ -10,17 +10,20 @@
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
-            background-color: rgb(225, 194, 145);
+            background-color: rgb(212, 168, 98);
             color: black;
         }
         h1 {
+            color: #6F4E37;
             text-align: center;
             margin-bottom: 30px;
         }
         .coffee-shop {
-            padding: 15px 0;
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
             margin-bottom: 15px;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .coffee-shop.past {
             opacity: 0.7;
@@ -31,9 +34,11 @@
         .name {
             font-size: 1.4em;
             font-weight: bold;
+            color: #6F4E37;
             margin-bottom: 5px;
         }
         .date-time {
+            color: #666;
             margin-bottom: 5px;
         }
         .address {
@@ -47,7 +52,6 @@
             font-family: monospace;
             white-space: pre;
             display: none;
-            color: black;
         }
         #debug-toggle {
             background: #6F4E37;
@@ -72,8 +76,36 @@
     <div id="debug-console"></div>
 
     <script>
-        // [Previous JavaScript code remains exactly the same]
-        // Only the CSS has been modified per your request
+        // Debugging state
+        const debug = {
+            enabled: false,
+            log: [],
+            toggle: function() {
+                this.enabled = !this.enabled;
+                const consoleEl = document.getElementById('debug-console');
+                const buttonEl = document.getElementById('debug-toggle');
+                
+                if (this.enabled) {
+                    consoleEl.style.display = 'block';
+                    buttonEl.textContent = 'Hide Debug Info';
+                    this.updateConsole();
+                } else {
+                    consoleEl.style.display = 'none';
+                    buttonEl.textContent = 'Show Debug Info';
+                }
+            },
+            add: function(message) {
+                const timestamp = new Date().toISOString();
+                this.log.push(`${timestamp}: ${message}`);
+                if (this.enabled) {
+                    this.updateConsole();
+                }
+            },
+            updateConsole: function() {
+                document.getElementById('debug-console').textContent = this.log.join('\n');
+            }
+        };
+
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('debug-toggle').addEventListener('click', () => debug.toggle());
             
