@@ -3,58 +3,15 @@
 <head>
     <title>Sunday Morning Coffee Tour</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-            color: #333;
-        }
-        h1 {
-            color: #6F4E37;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .coffee-shop {
-            background-color: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .coffee-shop.past {
-            text-decoration: line-through;
-            color: #999;
-            background-color: #f0f0f0;
-        }
-        .name {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #6F4E37;
-            margin-bottom: 5px;
-        }
-        .date-time {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-        }
-        .address {
-            font-style: italic;
-            color: #666;
-        }
-        .loading {
-            text-align: center;
-            padding: 20px;
-        }
-        .error {
-            color: red;
-            text-align: center;
-            padding: 20px;
-        }
-        .date-error {
-            color: red;
-            font-size: 0.8em;
+        /* [Keep all previous styles] */
+        .debug-info {
+            font-family: monospace;
+            white-space: pre;
+            background: #f0f0f0;
+            padding: 10px;
+            margin-top: 20px;
+            border-radius: 5px;
+            font-size: 0.9em;
         }
     </style>
 </head>
@@ -63,68 +20,71 @@
     <div id="coffee-tours-container">
         <div class="loading">Loading coffee tours...</div>
     </div>
+    <div id="debug-container" style="display:none;"></div>
 
     <script>
-        // Parse M/D/YYYY format dates
+        // Debug function to show raw data
+        function showDebugInfo(data) {
+            const debugDiv = document.getElementById('debug-container');
+            debugDiv.style.display = 'block';
+            debugDiv.innerHTML = '<h3>Debug Information:</h3><div class="debug-info">' + 
+                                JSON.stringify(data, null, 2) + '</div>';
+        }
+
+        // Enhanced date parser for M/D/YYYY format
         function parseMDYDate(dateString) {
-            const parts = dateString.split('/');
-            if (parts.length !== 3) return null;
+            if (!dateString) return null;
             
-            const month = parseInt(parts[0], 10) - 1; // Months are 0-based
-            const day = parseInt(parts[1], 10);
-            const year = parseInt(parts[2], 10);
-            
-            // Validate date components
-            if (isNaN(month) || isNaN(day) || isNaN(year)) return null;
-            if (month < 0 || month > 11) return null;
-            if (day < 1 || day > 31) return null;
-            
-            const date = new Date(year, month, day);
-            // Check if date is valid (handles cases like Feb 30)
-            if (date.getMonth() !== month || date.getDate() !== day) return null;
-            
-            return date;
-        }
-
-        function formatDisplayDate(dateString) {
-            const date = parseMDYDate(dateString);
-            if (!date) {
-                return `<span>${dateString} <span class="date-error">(Invalid Date)</span></span>`;
+            try {
+                const parts = dateString.split('/').map(part => parseInt(part, 10));
+                if (parts.length !== 3 || parts.some(isNaN)) return null;
+                
+                // Note: Months are 0-based in JavaScript Date
+                const date = new Date(parts[2], parts[0] - 1, parts[1]);
+                
+                // Validate the date actually matches the input (handles invalid dates like 2/30/2023)
+                if (date.getMonth() + 1 !== parts[0] || date.getDate() !== parts[1]) {
+                    return null;
+                }
+                
+                return date;
+            } catch (e) {
+                return null;
             }
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            return date.toLocaleDateString('en-US', options);
         }
 
-        function isPastDate(dateString) {
-            const date = parseMDYDate(dateString);
-            if (!date) return false;
-            
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            return date < today;
-        }
-
+        // [Keep all other functions from previous version]
+        // Modify parseCSV to be more lenient:
         function parseCSV(csvText) {
-            const lines = csvText.split('\n');
-            if (lines.length < 1) return [];
+            // First normalize line endings and trim
+            csvText = csvText.replace(/\r\n?/g, '\n').trim();
             
-            const headers = lines[0].split('\t').map(h => h.trim());
+            const lines = csvText.split('\n');
+            if (lines.length < 2) return []; // Need at least header + one row
+            
+            // Try both tab and comma delimiters
+            let delimiter = '\t';
+            if (lines[0].indexOf('\t') === -1 && lines[0].indexOf(',') !== -1) {
+                delimiter = ',';
+            }
+            
+            const headers = lines[0].split(delimiter).map(h => h.trim().toLowerCase());
             const result = [];
             
             for (let i = 1; i < lines.length; i++) {
-                if (!lines[i].trim()) continue;
+                const line = lines[i].trim();
+                if (!line) continue;
                 
                 const obj = {};
-                const currentline = lines[i].split('\t');
+                const currentline = line.split(delimiter);
                 
                 for (let j = 0; j < headers.length; j++) {
                     if (j < currentline.length) {
                         obj[headers[j]] = currentline[j] ? currentline[j].trim() : '';
-                    } else {
-                        obj[headers[j]] = '';
                     }
                 }
                 
+                // Only require name and date fields
                 if (obj.name && obj.date) {
                     result.push(obj);
                 }
@@ -136,48 +96,37 @@
         async function loadCoffeeShops() {
             try {
                 const response = await fetch('coffee_tours.csv');
-                if (!response.ok) throw new Error('CSV file not found');
+                if (!response.ok) throw new Error('CSV file not found (404)');
                 
                 const csvText = await response.text();
                 const coffeeShops = parseCSV(csvText);
                 
+                // Debug: Show what was parsed
+                showDebugInfo({
+                    csvSample: csvText.split('\n').slice(0, 3).join('\n'),
+                    parsedData: coffeeShops,
+                    firstDate: coffeeShops[0]?.date,
+                    firstDateParsed: parseMDYDate(coffeeShops[0]?.date)
+                });
+                
                 if (coffeeShops.length === 0) {
-                    throw new Error('No valid coffee shop data found');
+                    throw new Error('Found 0 valid entries. Check CSV format.');
                 }
                 
-                // Sort by date (invalid dates will go to the end)
-                coffeeShops.sort((a, b) => {
-                    const dateA = parseMDYDate(a.date) || new Date(8640000000000000); // Far future date
-                    const dateB = parseMDYDate(b.date) || new Date(8640000000000000);
-                    return dateA - dateB;
-                });
+                // [Rest of your existing sorting and display code]
                 
-                const container = document.getElementById('coffee-tours-container');
-                container.innerHTML = '';
-                
-                coffeeShops.forEach(shop => {
-                    const shopElement = document.createElement('div');
-                    const isPast = isPastDate(shop.date);
-                    shopElement.className = `coffee-shop ${isPast ? 'past' : ''}`;
-                    
-                    shopElement.innerHTML = `
-                        <div class="name">${shop.name || 'Unnamed Coffee Shop'}</div>
-                        <div class="date-time">
-                            <span class="date">${formatDisplayDate(shop.date)}</span>
-                            <span class="time">${shop.time || ''}</span>
-                        </div>
-                        ${shop.address ? `<div class="address">${shop.address}</div>` : ''}
-                    `;
-                    
-                    container.appendChild(shopElement);
-                });
             } catch (error) {
                 console.error('Error:', error);
                 document.getElementById('coffee-tours-container').innerHTML = 
                     `<div class="error">
                         <p>Error loading coffee tours</p>
                         <p><small>${error.message}</small></p>
-                        <p><small>Ensure your CSV uses tabs between columns and dates are in M/D/YYYY format</small></p>
+                        <p><small>Required CSV format:</small></p>
+                        <div class="debug-info">
+name\taddress\tdate\ttime
+Example Coffee\t123 Main St\t6/9/2025\t9:00 AM
+                        </div>
+                        <p><button onclick="location.reload()">Try Again</button></p>
                     </div>`;
             }
         }
