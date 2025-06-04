@@ -1,123 +1,126 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sunday Morning Coffee Tour</title>
     <style>
-        /* [Keep all your existing styles] */
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #6F4E37;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .coffee-shop {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .coffee-shop.past {
+            opacity: 0.7;
+        }
+        .coffee-shop.past .name {
+            text-decoration: line-through;
+        }
+        .name {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #6F4E37;
+            margin-bottom: 5px;
+        }
+        .date-time {
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .address {
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
     <h1>Sunday Morning Coffee Tour</h1>
-    <div id="coffee-tours-container">
-        <div class="loading">Loading coffee tours...</div>
-    </div>
+    <div id="coffee-tours"></div>
 
     <script>
-        // Robust CSV parser that handles commas in fields (tab-delimited)
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('coffee_tours.csv')
+                .then(response => response.text())
+                .then(data => {
+                    const tours = parseCSV(data);
+                    displayTours(tours);
+                })
+                .catch(error => {
+                    console.error('Error loading CSV file:', error);
+                    document.getElementById('coffee-tours').innerHTML = 
+                        '<p>Error loading tour data. Please try again later.</p>';
+                });
+        });
+
         function parseCSV(csvText) {
             const lines = csvText.split('\n');
-            if (lines.length < 2) return []; // Need header + at least one row
+            const headers = lines[0].split('\t');
             
-            // Get headers (first line)
-            const headers = lines[0].split('\t').map(h => h.trim().toLowerCase());
+            const tours = [];
             
-            const result = [];
             for (let i = 1; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (!line) continue;
+                if (lines[i].trim() === '') continue;
                 
-                // Special parsing to handle commas in fields
-                const fields = [];
-                let currentField = '';
-                let inQuotes = false;
+                // Handle addresses with commas by using a tab delimiter and not splitting on commas
+                const values = lines[i].split('\t');
                 
-                for (let char of line) {
-                    if (char === '"') {
-                        inQuotes = !inQuotes;
-                    } else if (char === '\t' && !inQuotes) {
-                        fields.push(currentField.trim());
-                        currentField = '';
-                    } else {
-                        currentField += char;
-                    }
-                }
-                fields.push(currentField.trim()); // Add last field
+                // If we don't have enough values, skip this line
+                if (values.length < headers.length) continue;
                 
-                // Map fields to headers
-                const obj = {};
-                headers.forEach((header, index) => {
-                    if (index < fields.length) {
-                        obj[header] = fields[index].replace(/^"|"$/g, ''); // Remove surrounding quotes
-                    }
-                });
+                const tour = {
+                    name: values[0].trim(),
+                    address: values[1].trim(),
+                    date: values[2].trim(),
+                    time: values[3].trim()
+                };
                 
-                if (obj.name && obj.date) {
-                    result.push(obj);
-                }
+                tours.push(tour);
             }
-            return result;
+            
+            return tours;
         }
 
-        // [Keep all your other functions: parseMDYDate, formatDisplayDate, isPastDate]
-
-        async function loadCoffeeShops() {
-            try {
-                const response = await fetch('coffee_tours.txt');
-                if (!response.ok) throw new Error('CSV file not found');
+        function displayTours(tours) {
+            // Sort tours by date
+            tours.sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            const container = document.getElementById('coffee-tours');
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Reset time part for accurate date comparison
+            
+            tours.forEach(tour => {
+                const tourDate = new Date(tour.date);
+                const isPast = tourDate < today;
                 
-                const csvText = await response.text();
-                const coffeeShops = parseCSV(csvText);
+                const tourElement = document.createElement('div');
+                tourElement.className = `coffee-shop ${isPast ? 'past' : ''}`;
                 
-                if (coffeeShops.length === 0) {
-                    throw new Error('No valid entries found. Check your CSV format.');
-                }
+                tourElement.innerHTML = `
+                    <div class="name">${tour.name}</div>
+                    <div class="date-time">${formatDate(tourDate)} • ${tour.time}</div>
+                    <div class="address">${tour.address}</div>
+                `;
                 
-                // Debug: Log first entry to console
-                console.log('First parsed entry:', coffeeShops[0]);
-                
-                // Sort by date
-                coffeeShops.sort((a, b) => {
-                    const dateA = parseMDYDate(a.date) || new Date(8640000000000000);
-                    const dateB = parseMDYDate(b.date) || new Date(8640000000000000);
-                    return dateA - dateB;
-                });
-                
-                // Display coffee shops
-                const container = document.getElementById('coffee-tours-container');
-                container.innerHTML = '';
-                
-                coffeeShops.forEach(shop => {
-                    const shopElement = document.createElement('div');
-                    const isPast = isPastDate(shop.date);
-                    shopElement.className = `coffee-shop ${isPast ? 'past' : ''}`;
-                    
-                    shopElement.innerHTML = `
-                        <div class="name">${shop.name || 'Unnamed Coffee Shop'}</div>
-                        <div class="date-time">
-                            <span class="date">${formatDisplayDate(shop.date)}</span>
-                            <span class="time">${shop.time || ''}</span>
-                        </div>
-                        ${shop.address ? `<div class="address">${shop.address}</div>` : ''}
-                    `;
-                    
-                    container.appendChild(shopElement);
-                });
-                
-            } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('coffee-tours-container').innerHTML = 
-                    `<div class="error">
-                        <p>Error loading coffee tours</p>
-                        <p><small>${error.message}</small></p>
-                        <p><small>Required format (tab-delimited):</small></p>
-                        <pre>name\taddress\tdate\ttime
-Example\t"123 Main St, Apt 4"\t6/9/2025\t9:00 AM</pre>
-                        <p><button onclick="location.reload()">Try Again</button></p>
-                    </div>`;
-            }
+                container.appendChild(tourElement);
+            });
         }
 
-        window.addEventListener('DOMContentLoaded', loadCoffeeShops);
+        function formatDate(date) {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return date.toLocaleDateString('en-US', options);
+        }
     </script>
 </body>
 </html>
