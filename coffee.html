@@ -43,83 +43,243 @@
         .address {
             font-style: italic;
         }
+        #debug-console {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre;
+            display: none;
+        }
+        #debug-toggle {
+            background: #6F4E37;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .error {
+            color: #d9534f;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
     <h1>Sunday Morning Coffee Tour</h1>
     <div id="coffee-tours"></div>
+    
+    <button id="debug-toggle">Show Debug Info</button>
+    <div id="debug-console"></div>
 
     <script>
+        // Debugging state
+        const debug = {
+            enabled: false,
+            log: [],
+            toggle: function() {
+                this.enabled = !this.enabled;
+                const consoleEl = document.getElementById('debug-console');
+                const buttonEl = document.getElementById('debug-toggle');
+                
+                if (this.enabled) {
+                    consoleEl.style.display = 'block';
+                    buttonEl.textContent = 'Hide Debug Info';
+                    this.updateConsole();
+                } else {
+                    consoleEl.style.display = 'none';
+                    buttonEl.textContent = 'Show Debug Info';
+                }
+            },
+            add: function(message) {
+                const timestamp = new Date().toISOString();
+                this.log.push(`${timestamp}: ${message}`);
+                if (this.enabled) {
+                    this.updateConsole();
+                }
+            },
+            updateConsole: function() {
+                document.getElementById('debug-console').textContent = this.log.join('\n');
+            }
+        };
+
         document.addEventListener('DOMContentLoaded', function() {
+            // Set up debug toggle button
+            document.getElementById('debug-toggle').addEventListener('click', () => debug.toggle());
+            
+            debug.add('Page loaded, starting data fetch...');
+            
             fetch('coffee_tours.csv')
-                .then(response => response.text())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.text();
+                })
                 .then(data => {
+                    debug.add('CSV file loaded successfully');
+                    debug.add(`Raw CSV data (first 200 chars):\n${data.substring(0, 200)}...`);
+                    
                     const tours = parseCSV(data);
+                    debug.add(`Parsed ${tours.length} tours`);
+                    
+                    if (tours.length > 0) {
+                        debug.add('Sample tour data:');
+                        debug.add(JSON.stringify(tours[0], null, 2));
+                    }
+                    
                     displayTours(tours);
                 })
                 .catch(error => {
-                    console.error('Error loading CSV file:', error);
-                    document.getElementById('coffee-tours').innerHTML = 
-                        '<p>Error loading tour data. Please try again later.</p>';
+                    debug.add(`Error: ${error.message}`);
+                    debug.add(`Stack trace: ${error.stack}`);
+                    
+                    const container = document.getElementById('coffee-tours');
+                    container.innerHTML = `
+                        <div class="error">
+                            <p>Error loading tour data. Please check the following:</p>
+                            <ul>
+                                <li>Is the CSV file named "coffee_tours.csv" in the same directory?</li>
+                                <li>Does the CSV file contain data in the correct format?</li>
+                                <li>Are you running this through a local web server? Some browsers block local file access.</li>
+                            </ul>
+                            <p>Check debug console for more details.</p>
+                        </div>
+                    `;
+                    
+                    // Force show debug console on error
+                    debug.enabled = true;
+                    debug.toggle();
                 });
         });
 
         function parseCSV(csvText) {
+            debug.add('Starting CSV parsing...');
+            
+            // Normalize line endings and trim
+            csvText = csvText.replace(/\r\n/g, '\n').trim();
+            
             const lines = csvText.split('\n');
-            const headers = lines[0].split('\t');
+            debug.add(`Found ${lines.length} lines in CSV`);
             
-            const tours = [];
-            
-            for (let i = 1; i < lines.length; i++) {
-                if (lines[i].trim() === '') continue;
-                
-                // Handle addresses with commas by using a tab delimiter and not splitting on commas
-                const values = lines[i].split('\t');
-                
-                // If we don't have enough values, skip this line
-                if (values.length < headers.length) continue;
-                
-                const tour = {
-                    name: values[0].trim(),
-                    address: values[1].trim(),
-                    date: values[2].trim(),
-                    time: values[3].trim()
-                };
-                
-                tours.push(tour);
+            if (lines.length < 2) {
+                debug.add('Error: CSV file has less than 2 lines (header + data)');
+                return [];
             }
             
+            const headers = lines[0].split('\t');
+            debug.add(`Headers found: ${headers.join(', ')}`);
+            
+            const expectedHeaders = ['name', 'address', 'date', 'time'];
+            if (!expectedHeaders.every(h => headers.includes(h))) {
+                debug.add(`Error: CSV headers don't match expected format. Found: ${headers.join(', ')}`);
+                return [];
+            }
+            
+            const tours = [];
+            let lineNumber = 1; // Start after header
+            
+            for (let i = 1; i < lines.length; i++) {
+                lineNumber++;
+                const line = lines[i].trim();
+                if (line === '') {
+                    debug.add(`Line ${lineNumber}: Empty line skipped`);
+                    continue;
+                }
+                
+                // Split on tabs but handle cases where address might contain tabs
+                // This is a simplified approach - for more complex cases consider a proper CSV parser
+                const values = line.split('\t');
+                
+                if (values.length < 4) {
+                    debug.add(`Line ${lineNumber}: Skipping - only ${values.length} values found`);
+                    continue;
+                }
+                
+                try {
+                    const tour = {
+                        name: values[0].trim(),
+                        address: values[1].trim(),
+                        date: values[2].trim(),
+                        time: values[3].trim()
+                    };
+                    
+                    // Validate date format
+                    if (isNaN(new Date(tour.date).getTime())) {
+                        debug.add(`Line ${lineNumber}: Invalid date format "${tour.date}"`);
+                        continue;
+                    }
+                    
+                    tours.push(tour);
+                    debug.add(`Line ${lineNumber}: Added tour "${tour.name}"`);
+                } catch (e) {
+                    debug.add(`Line ${lineNumber}: Error parsing - ${e.message}`);
+                }
+            }
+            
+            debug.add(`Successfully parsed ${tours.length} tours`);
             return tours;
         }
 
         function displayTours(tours) {
+            debug.add('Starting tour display...');
+            
+            if (tours.length === 0) {
+                debug.add('No tours to display');
+                document.getElementById('coffee-tours').innerHTML = 
+                    '<p>No tour data available. Check CSV file format.</p>';
+                return;
+            }
+            
             // Sort tours by date
-            tours.sort((a, b) => new Date(a.date) - new Date(b.date));
+            tours.sort((a, b) => {
+                const dateA = new Date(a.date);
+                const dateB = new Date(b.date);
+                return dateA - dateB;
+            });
+            
+            debug.add('Tours sorted by date');
             
             const container = document.getElementById('coffee-tours');
             const today = new Date();
-            today.setHours(0, 0, 0, 0); // Reset time part for accurate date comparison
+            today.setHours(0, 0, 0, 0);
+            debug.add(`Today's date for comparison: ${today.toISOString()}`);
             
             tours.forEach(tour => {
                 const tourDate = new Date(tour.date);
                 const isPast = tourDate < today;
+                debug.add(`Processing "${tour.name}" - Date: ${tourDate.toISOString()} - isPast: ${isPast}`);
                 
                 const tourElement = document.createElement('div');
                 tourElement.className = `coffee-shop ${isPast ? 'past' : ''}`;
                 
                 tourElement.innerHTML = `
-                    <div class="name">${tour.name}</div>
-                    <div class="date-time">${formatDate(tourDate)} • ${tour.time}</div>
-                    <div class="address">${tour.address}</div>
+                    <div class="name">${escapeHtml(tour.name)}</div>
+                    <div class="date-time">${formatDate(tourDate)} • ${escapeHtml(tour.time)}</div>
+                    <div class="address">${escapeHtml(tour.address)}</div>
                 `;
                 
                 container.appendChild(tourElement);
             });
+            
+            debug.add(`Displayed ${tours.length} tours`);
         }
 
         function formatDate(date) {
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             return date.toLocaleDateString('en-US', options);
+        }
+        
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
     </script>
 </body>
