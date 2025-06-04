@@ -3,16 +3,7 @@
 <head>
     <title>Sunday Morning Coffee Tour</title>
     <style>
-        /* [Keep all previous styles] */
-        .debug-info {
-            font-family: monospace;
-            white-space: pre;
-            background: #f0f0f0;
-            padding: 10px;
-            margin-top: 20px;
-            border-radius: 5px;
-            font-size: 0.9em;
-        }
+        /* [Keep all your existing styles] */
     </style>
 </head>
 <body>
@@ -20,100 +11,97 @@
     <div id="coffee-tours-container">
         <div class="loading">Loading coffee tours...</div>
     </div>
-    <div id="debug-container" style="display:none;"></div>
 
     <script>
-        // Debug function to show raw data
-        function showDebugInfo(data) {
-            const debugDiv = document.getElementById('debug-container');
-            debugDiv.style.display = 'block';
-            debugDiv.innerHTML = '<h3>Debug Information:</h3><div class="debug-info">' + 
-                                JSON.stringify(data, null, 2) + '</div>';
-        }
-
-        // Enhanced date parser for M/D/YYYY format
-        function parseMDYDate(dateString) {
-            if (!dateString) return null;
-            
-            try {
-                const parts = dateString.split('/').map(part => parseInt(part, 10));
-                if (parts.length !== 3 || parts.some(isNaN)) return null;
-                
-                // Note: Months are 0-based in JavaScript Date
-                const date = new Date(parts[2], parts[0] - 1, parts[1]);
-                
-                // Validate the date actually matches the input (handles invalid dates like 2/30/2023)
-                if (date.getMonth() + 1 !== parts[0] || date.getDate() !== parts[1]) {
-                    return null;
-                }
-                
-                return date;
-            } catch (e) {
-                return null;
-            }
-        }
-
-        // [Keep all other functions from previous version]
-        // Modify parseCSV to be more lenient:
+        // Robust CSV parser that handles commas in fields (tab-delimited)
         function parseCSV(csvText) {
-            // First normalize line endings and trim
-            csvText = csvText.replace(/\r\n?/g, '\n').trim();
-            
             const lines = csvText.split('\n');
-            if (lines.length < 2) return []; // Need at least header + one row
+            if (lines.length < 2) return []; // Need header + at least one row
             
-            // Try both tab and comma delimiters
-            let delimiter = '\t';
-            if (lines[0].indexOf('\t') === -1 && lines[0].indexOf(',') !== -1) {
-                delimiter = ',';
-            }
+            // Get headers (first line)
+            const headers = lines[0].split('\t').map(h => h.trim().toLowerCase());
             
-            const headers = lines[0].split(delimiter).map(h => h.trim().toLowerCase());
             const result = [];
-            
             for (let i = 1; i < lines.length; i++) {
                 const line = lines[i].trim();
                 if (!line) continue;
                 
-                const obj = {};
-                const currentline = line.split(delimiter);
+                // Special parsing to handle commas in fields
+                const fields = [];
+                let currentField = '';
+                let inQuotes = false;
                 
-                for (let j = 0; j < headers.length; j++) {
-                    if (j < currentline.length) {
-                        obj[headers[j]] = currentline[j] ? currentline[j].trim() : '';
+                for (let char of line) {
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === '\t' && !inQuotes) {
+                        fields.push(currentField.trim());
+                        currentField = '';
+                    } else {
+                        currentField += char;
                     }
                 }
+                fields.push(currentField.trim()); // Add last field
                 
-                // Only require name and date fields
+                // Map fields to headers
+                const obj = {};
+                headers.forEach((header, index) => {
+                    if (index < fields.length) {
+                        obj[header] = fields[index].replace(/^"|"$/g, ''); // Remove surrounding quotes
+                    }
+                });
+                
                 if (obj.name && obj.date) {
                     result.push(obj);
                 }
             }
-            
             return result;
         }
+
+        // [Keep all your other functions: parseMDYDate, formatDisplayDate, isPastDate]
 
         async function loadCoffeeShops() {
             try {
                 const response = await fetch('coffee_tours.csv');
-                if (!response.ok) throw new Error('CSV file not found (404)');
+                if (!response.ok) throw new Error('CSV file not found');
                 
                 const csvText = await response.text();
                 const coffeeShops = parseCSV(csvText);
                 
-                // Debug: Show what was parsed
-                showDebugInfo({
-                    csvSample: csvText.split('\n').slice(0, 3).join('\n'),
-                    parsedData: coffeeShops,
-                    firstDate: coffeeShops[0]?.date,
-                    firstDateParsed: parseMDYDate(coffeeShops[0]?.date)
-                });
-                
                 if (coffeeShops.length === 0) {
-                    throw new Error('Found 0 valid entries. Check CSV format.');
+                    throw new Error('No valid entries found. Check your CSV format.');
                 }
                 
-                // [Rest of your existing sorting and display code]
+                // Debug: Log first entry to console
+                console.log('First parsed entry:', coffeeShops[0]);
+                
+                // Sort by date
+                coffeeShops.sort((a, b) => {
+                    const dateA = parseMDYDate(a.date) || new Date(8640000000000000);
+                    const dateB = parseMDYDate(b.date) || new Date(8640000000000000);
+                    return dateA - dateB;
+                });
+                
+                // Display coffee shops
+                const container = document.getElementById('coffee-tours-container');
+                container.innerHTML = '';
+                
+                coffeeShops.forEach(shop => {
+                    const shopElement = document.createElement('div');
+                    const isPast = isPastDate(shop.date);
+                    shopElement.className = `coffee-shop ${isPast ? 'past' : ''}`;
+                    
+                    shopElement.innerHTML = `
+                        <div class="name">${shop.name || 'Unnamed Coffee Shop'}</div>
+                        <div class="date-time">
+                            <span class="date">${formatDisplayDate(shop.date)}</span>
+                            <span class="time">${shop.time || ''}</span>
+                        </div>
+                        ${shop.address ? `<div class="address">${shop.address}</div>` : ''}
+                    `;
+                    
+                    container.appendChild(shopElement);
+                });
                 
             } catch (error) {
                 console.error('Error:', error);
@@ -121,11 +109,9 @@
                     `<div class="error">
                         <p>Error loading coffee tours</p>
                         <p><small>${error.message}</small></p>
-                        <p><small>Required CSV format:</small></p>
-                        <div class="debug-info">
-name\taddress\tdate\ttime
-Example Coffee\t123 Main St\t6/9/2025\t9:00 AM
-                        </div>
+                        <p><small>Required format (tab-delimited):</small></p>
+                        <pre>name\taddress\tdate\ttime
+Example\t"123 Main St, Apt 4"\t6/9/2025\t9:00 AM</pre>
                         <p><button onclick="location.reload()">Try Again</button></p>
                     </div>`;
             }
