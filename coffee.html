@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sunday Morning Coffee Tour</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        h1 {
+            color: #6F4E37;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .coffee-shop {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .coffee-shop.past {
+            text-decoration: line-through;
+            color: #999;
+            background-color: #f0f0f0;
+        }
+        .name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #6F4E37;
+            margin-bottom: 5px;
+        }
+        .date-time {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        .address {
+            font-style: italic;
+            color: #666;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sunday Morning Coffee Tour</h1>
+    
+    <div id="coffee-tours-container">
+        <div class="loading">Loading coffee tours...</div>
+    </div>
+
+    <script>
+        // Function to format date for display
+        function formatDisplayDate(dateString) {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('en-US', options);
+        }
+
+        // Function to check if date is in the past
+        function isPastDate(dateString) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            return new Date(dateString) < today;
+        }
+
+        // Function to parse CSV data
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n');
+            const headers = lines[0].split('\t');
+            const result = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                
+                const obj = {};
+                const currentline = lines[i].split('\t');
+                
+                for (let j = 0; j < headers.length; j++) {
+                    obj[headers[j].trim()] = currentline[j] ? currentline[j].trim() : '';
+                }
+                
+                result.push(obj);
+            }
+            
+            return result;
+        }
+
+        // Load and display coffee shop data
+        async function loadCoffeeShops() {
+            try {
+                const response = await fetch('coffee_tours.csv');
+                if (!response.ok) throw new Error('Failed to load CSV file');
+                
+                const csvText = await response.text();
+                const coffeeShops = parseCSV(csvText);
+                
+                // Sort by date
+                coffeeShops.sort((a, b) => new Date(a.date) - new Date(b.date));
+                
+                // Display coffee shops
+                const container = document.getElementById('coffee-tours-container');
+                container.innerHTML = '';
+                
+                if (coffeeShops.length === 0) {
+                    container.innerHTML = '<div class="coffee-shop">No coffee tours scheduled</div>';
+                    return;
+                }
+                
+                coffeeShops.forEach(shop => {
+                    const shopElement = document.createElement('div');
+                    shopElement.className = `coffee-shop ${isPastDate(shop.date) ? 'past' : ''}`;
+                    
+                    shopElement.innerHTML = `
+                        <div class="name">${shop.name}</div>
+                        <div class="date-time">
+                            <span class="date">${formatDisplayDate(shop.date)}</span>
+                            <span class="time">${shop.time}</span>
+                        </div>
+                        <div class="address">${shop.address}</div>
+                    `;
+                    
+                    container.appendChild(shopElement);
+                });
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('coffee-tours-container').innerHTML = 
+                    `<div class="coffee-shop">Error loading coffee tours: ${error.message}</div>`;
+            }
+        }
+
+        // Load the data when page loads
+        window.addEventListener('DOMContentLoaded', loadCoffeeShops);
+    </script>
+</body>
+</html>
