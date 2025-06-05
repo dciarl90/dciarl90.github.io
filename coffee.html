@@ -23,6 +23,11 @@
             color: rgb(0, 0, 0);
         }
 
+        #coffee-tours {
+            display: flex;
+            flex-direction: column;
+        }
+
         .coffee-shop {
             background-color: rgb(212, 168, 98);
             border-radius: 8px;
@@ -32,8 +37,9 @@
         }
         .coffee-shop.past {
             opacity: 0.7;
+            order: 1; /* Moves past tours to the bottom */
         }
-        .coffee-shop.past .name {
+        .coffee-shop.past * {
             text-decoration: line-through;
         }
         .name {
@@ -180,23 +186,44 @@
             });
             
             const container = document.getElementById('coffee-tours');
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            const now = new Date();
             
+            // First add upcoming tours
             tours.forEach(tour => {
                 const tourDate = new Date(tour.date);
-                const isPast = tourDate < today;
+                const isPast = tourDate < now;
                 
-                const tourElement = document.createElement('div');
-                tourElement.className = `coffee-shop ${isPast ? 'past' : ''}`;
+                if (!isPast) {
+                    const tourElement = document.createElement('div');
+                    tourElement.className = 'coffee-shop';
+                    
+                    tourElement.innerHTML = `
+                        <div class="name">${escapeHtml(tour.name)}</div>
+                        <div class="date-time">${formatDate(tourDate)} • ${escapeHtml(tour.time)}</div>
+                        <div class="address">${escapeHtml(tour.address)}</div>
+                    `;
+                    
+                    container.appendChild(tourElement);
+                }
+            });
+            
+            // Then add past tours
+            tours.forEach(tour => {
+                const tourDate = new Date(tour.date);
+                const isPast = tourDate < now;
                 
-                tourElement.innerHTML = `
-                    <div class="name">${escapeHtml(tour.name)}</div>
-                    <div class="date-time">${formatDate(tourDate)} • ${escapeHtml(tour.time)}</div>
-                    <div class="address">${escapeHtml(tour.address)}</div>
-                `;
-                
-                container.appendChild(tourElement);
+                if (isPast) {
+                    const tourElement = document.createElement('div');
+                    tourElement.className = 'coffee-shop past';
+                    
+                    tourElement.innerHTML = `
+                        <div class="name">${escapeHtml(tour.name)}</div>
+                        <div class="date-time">${formatDate(tourDate)} • ${escapeHtml(tour.time)}</div>
+                        <div class="address">${escapeHtml(tour.address)}</div>
+                    `;
+                    
+                    container.appendChild(tourElement);
+                }
             });
         }
 
