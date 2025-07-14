@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Donut Portal</title>
+    <title>Dom's Homepage</title>
     <style>
         body {
             margin: 0;
@@ -38,7 +38,16 @@
             cursor: pointer;
             transition: transform 0.2s;
         }
-        .coffee-button:hover {
+        .bread-button {
+            position: absolute;
+            bottom: 5%;
+            right: calc(5% + 300px + 20px); /* Position to left of coffee button with 20px gap */
+            width: 300px;
+            max-width: 30%;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .coffee-button:hover, .bread-button:hover {
             transform: scale(1.1);
         }
     </style>
@@ -47,6 +56,9 @@
     <div class="donut-container">
         <img src="donut.jpg" alt="Home">
         <a href="legs.html" class="secret-button" aria-label="Legs Analysis"></a>
+        <a href="https://forms.gle/TU1BeBtvQmVpSofD8" class="bread-button">
+            <img src="bread.png" alt="Bread">
+        </a>
         <a href="coffee.html" class="coffee-button">
             <img src="coffee_button.png" alt="Sunday Morning Coffee Tour">
         </a>
