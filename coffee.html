@@ -186,12 +186,13 @@
             });
             
             const container = document.getElementById('coffee-tours');
-            const now = new Date();
+            const nowPlusOneDay = new Date(Date().getTime() + 24 * 60 * 60 * 1000);
+
             
             // First add upcoming tours
             tours.forEach(tour => {
                 const tourDate = new Date(tour.date);
-                const isPast = tourDate < now;
+                const isPast = tourDate < nowPlusOneDay;
                 
                 if (!isPast) {
                     const tourElement = document.createElement('div');
