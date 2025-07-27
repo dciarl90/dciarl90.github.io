@@ -211,7 +211,7 @@
             // Then add past tours
             tours.forEach(tour => {
                 const tourDate = new Date(tour.date);
-                const isPast = tourDate < now;
+                const isPast = tourDate < nowPlusOneDay;
                 
                 if (isPast) {
                     const tourElement = document.createElement('div');
