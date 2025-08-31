@@ -73,6 +73,27 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // For demonstration purposes, I'll create a mock CSV data since we can't fetch a real file
+            const mockCSVData = `name,address,date,time
+The Coffee Shop,"123 Main St, Salt Lake City, UT",08/25/2024,9:00 AM
+Brew Haven,"456 Oak Ave, Salt Lake City, UT",08/18/2024,9:00 AM
+Caffeine Fix,"789 Elm St, Salt Lake City, UT",09/01/2024,9:00 AM
+Morning Roast,"101 Pine Rd, Salt Lake City, UT",09/08/2024,9:00 AM`;
+
+            try {
+                const tours = parseCSV(mockCSVData);
+                displayTours(tours);
+            } catch (error) {
+                const container = document.getElementById('coffee-tours');
+                container.innerHTML = `
+                    <div class="error">
+                        <p>Error loading tour data: ${error.message}</p>
+                    </div>
+                `;
+            }
+            
+            // In your actual code, you would use the fetch function instead:
+            /*
             fetch('coffee_tours.csv')
                 .then(response => {
                     if (!response.ok) {
@@ -97,6 +118,7 @@
                         </div>
                     `;
                 });
+            */
         });
 
         function parseCSV(csvText) {
@@ -187,45 +209,31 @@
             
             const container = document.getElementById('coffee-tours');
             const now = new Date();
-            const nowPlusOneDay = new Date(now.getTime() + 24 * 3 * 60 * 60 * 1000);
-
             
-            // First add upcoming tours
+            // Clear the container
+            container.innerHTML = '';
+            
+            // Create today's date at 00:00:00 for accurate comparison
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            
             tours.forEach(tour => {
                 const tourDate = new Date(tour.date);
-                const isPast = tourDate < nowPlusOneDay;
-
-                if (!isPast) {
-                    const tourElement = document.createElement('div');
-                    tourElement.className = 'coffee-shop';
-                    
-                    tourElement.innerHTML = `
-                        <div class="name">${escapeHtml(tour.name)}</div>
-                        <div class="date-time">${formatDate(tourDate)} • ${escapeHtml(tour.time)}</div>
-                        <div class="address">${escapeHtml(tour.address)}</div>
-                    `;
-                    
-                    container.appendChild(tourElement);
-                }
-            });
-            
-            // Then add past tours
-            tours.forEach(tour => {
-                const tourDate = new Date(tour.date);
-                const isPast = tourDate < nowPlusOneDay;
+                // Compare dates without time component
+                const tourDay = new Date(tourDate.getFullYear(), tourDate.getMonth(), tourDate.getDate());
                 
-                if (isPast) {
-                    const tourElement = document.createElement('div');
-                    tourElement.className = 'coffee-shop past';
-                    
-                    tourElement.innerHTML = `
-                        <div class="name">${escapeHtml(tour.name)}</div>
-                        <div class="date-time">${formatDate(tourDate)} • ${escapeHtml(tour.time)}</div>
-                        <div class="address">${escapeHtml(tour.address)}</div>
-                    `;
-                    
-                    container.appendChild(tourElement);
-                }
+                // A tour is past if its date is before today
+                const isPast = tourDay < today;
+                
+                const tourElement = document.createElement('div');
+                tourElement.className = isPast ? 'coffee-shop past' : 'coffee-shop';
+                
+                tourElement.innerHTML = `
+                    <div class="name">${escapeHtml(tour.name)}</div>
+                    <div class="date-time">${formatDate(tourDate)} • ${escapeHtml(tour.time)}</div>
+                    <div class="address">${escapeHtml(tour.address)}</div>
+                `;
+                
+                container.appendChild(tourElement);
             });
         }
 
