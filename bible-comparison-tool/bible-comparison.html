@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bible Text Comparison Tool</title>
     <style>
-        /* Your existing CSS remains the same */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -263,6 +262,8 @@
                 this.loadedVersion = null;
                 this.manifest = null;
                 this.debugInfo = [];
+                // CORRECT PATH - since HTML is in /bible-comparison-tool/
+                this.basePath = './data/'; // This is correct for your structure
             }
 
             addDebugInfo(message, data = null) {
@@ -278,9 +279,12 @@
             // Load the Bible versions manifest
             async loadBibleManifest() {
                 try {
-                    this.addDebugInfo('Loading manifest from: ./bible-comparison-tool/data/manifest.json');
+                    // USE THE CORRECT PATH
+                    const manifestPath = `${this.basePath}manifest.json`;
+                    this.addDebugInfo(`Loading manifest from: ${manifestPath}`);
+                    this.addDebugInfo(`Full URL: ${window.location.origin}${window.location.pathname.replace(/[^/]*$/, '')}${manifestPath}`);
                     
-                    const response = await fetch('./bible-comparison-tool/data/manifest.json');
+                    const response = await fetch(manifestPath);
                     
                     if (!response.ok) {
                         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -294,14 +298,14 @@
                 } catch (error) {
                     this.addDebugInfo('ERROR loading manifest:', error);
                     
-                    // Fallback to local manifest
+                    // Fallback to local manifest with CORRECT paths
                     const fallbackManifest = {
                         versions: [
-                            { id: 'kjv', name: 'King James Version (KJV)', file: './bible-comparison-tool/data/kjv.json' },
-                            { id: 'niv', name: 'New International Version (NIV)', file: './bible-comparison-tool/data/niv.json' },
-                            { id: 'esv', name: 'English Standard Version (ESV)', file: './bible-comparison-tool/data/esv.json' },
-                            { id: 'nasb', name: 'New American Standard Bible (NASB)', file: './bible-comparison-tool/data/nasb.json' },
-                            { id: 'nlt', name: 'New Living Translation (NLT)', file: './bible-comparison-tool/data/nlt.json' }
+                            { id: 'kjv', name: 'King James Version (KJV)', file: `${this.basePath}kjv.json` },
+                            { id: 'niv', name: 'New International Version (NIV)', file: `${this.basePath}niv.json` },
+                            { id: 'esv', name: 'English Standard Version (ESV)', file: `${this.basePath}esv.json` },
+                            { id: 'nasb', name: 'New American Standard Bible (NASB)', file: `${this.basePath}nasb.json` },
+                            { id: 'nlt', name: 'New Living Translation (NLT)', file: `${this.basePath}nlt.json` }
                         ],
                         descriptions: {
                             kjv: "A classic English translation completed in 1611, known for its majestic language and poetic style.",
@@ -339,6 +343,7 @@
                     }
                     
                     this.addDebugInfo(`Loading Bible version: ${versionId} from ${versionInfo.file}`);
+                    this.addDebugInfo(`Full Bible file URL: ${window.location.origin}${window.location.pathname.replace(/[^/]*$/, '')}${versionInfo.file}`);
                     
                     const response = await fetch(versionInfo.file);
                     
@@ -346,22 +351,32 @@
                         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     }
                     
-                    const bibleFileData = await response.json();
-                    this.addDebugInfo(`Raw Bible data loaded for ${versionId}`, bibleFileData);
+                    // Get the response as text first to handle JSON parsing errors
+                    const responseText = await response.text();
+                    this.addDebugInfo(`Raw response text length: ${responseText.length} characters`);
                     
-                    let bibleText = this.extractTextFromData(bibleFileData);
-                    
-                    if (!bibleText) {
-                        throw new Error('Could not extract text from Bible data');
+                    // Validate JSON syntax before parsing
+                    try {
+                        const bibleFileData = JSON.parse(responseText);
+                        this.addDebugInfo(`JSON parsed successfully for ${versionId}`);
+                        
+                        let bibleText = this.extractTextFromData(bibleFileData);
+                        
+                        if (!bibleText) {
+                            throw new Error('Could not extract text from Bible data');
+                        }
+                        
+                        this.addDebugInfo(`Text extracted successfully. Length: ${bibleText.length} characters`);
+                        
+                        this.bibleData = bibleText;
+                        this.loadedVersion = versionId;
+                        
+                        showLoading(false);
+                        return this.bibleData;
+                        
+                    } catch (jsonError) {
+                        throw new Error(`Invalid JSON in ${versionInfo.file}: ${jsonError.message}`);
                     }
-                    
-                    this.addDebugInfo(`Text extracted successfully. Length: ${bibleText.length} characters`);
-                    
-                    this.bibleData = bibleText;
-                    this.loadedVersion = versionId;
-                    
-                    showLoading(false);
-                    return this.bibleData;
                     
                 } catch (error) {
                     this.addDebugInfo(`ERROR loading Bible version ${versionId}:`, error);
@@ -420,10 +435,10 @@
             }
 
             findTextInObject(obj, depth = 0) {
-                if (depth > 5) return null; // Prevent infinite recursion
+                if (depth > 5) return null;
                 
                 if (typeof obj === 'string') {
-                    return obj.length > 50 ? obj : null; // Only return substantial strings
+                    return obj.length > 50 ? obj : null;
                 }
                 
                 if (Array.isArray(obj)) {
@@ -432,7 +447,6 @@
                 }
                 
                 if (typeof obj === 'object' && obj !== null) {
-                    // Check common text-containing keys first
                     const textKeys = ['text', 'content', 'verseText', 'body', 'passage'];
                     for (let key of textKeys) {
                         if (obj[key] && typeof obj[key] === 'string' && obj[key].length > 50) {
@@ -440,7 +454,6 @@
                         }
                     }
                     
-                    // Recursively search all properties
                     for (let key in obj) {
                         if (obj.hasOwnProperty(key)) {
                             const result = this.findTextInObject(obj[key], depth + 1);
@@ -487,13 +500,23 @@
             try {
                 showLoading(true);
                 
-                // Test if files exist
-                const manifestExists = await testFile('./bible-comparison-tool/data/manifest.json');
+                // Test if files exist with CORRECT path
+                const manifestPath = './data/manifest.json';
+                const manifestExists = await testFile(manifestPath);
                 bibleManager.addDebugInfo(`Manifest file exists: ${manifestExists}`);
+                bibleManager.addDebugInfo(`Testing path: ${manifestPath}`);
+                bibleManager.addDebugInfo(`Current page: ${window.location.href}`);
+                bibleManager.addDebugInfo(`Expected manifest URL: ${window.location.origin}/bible-comparison-tool/data/manifest.json`);
                 
                 if (!manifestExists) {
-                    bibleManager.addDebugInfo('WARNING: Manifest file not found at ./bible-comparison-tool/data/manifest.json');
-                    bibleManager.addDebugInfo('Current page URL: ' + window.location.href);
+                    bibleManager.addDebugInfo('WARNING: Manifest file not found.');
+                    bibleManager.addDebugInfo('Please make sure your file structure is:');
+                    bibleManager.addDebugInfo('bible-comparison-tool/');
+                    bibleManager.addDebugInfo('├── bible-comparison.html (this file)');
+                    bibleManager.addDebugInfo('└── data/');
+                    bibleManager.addDebugInfo('    ├── manifest.json');
+                    bibleManager.addDebugInfo('    ├── kjv.json');
+                    bibleManager.addDebugInfo('    └── ...other bible files');
                 }
                 
                 const manifest = await bibleManager.loadBibleManifest();
