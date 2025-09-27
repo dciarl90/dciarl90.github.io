@@ -9,7 +9,7 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Arial, sans-serif;
         }
         
         body {
@@ -61,7 +61,6 @@
         h2 {
             color: #2c3e50;
             margin-bottom: 15px;
-            font-size: 1.4rem;
         }
         
         select, textarea {
@@ -86,38 +85,10 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
-            transition: background-color 0.3s;
         }
         
-        button:disabled {
-            background-color: #bdc3c7;
-            cursor: not-allowed;
-        }
-        
-        button:hover:not(:disabled) {
+        button:hover {
             background-color: #2980b9;
-        }
-        
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-            color: #7f8c8d;
-        }
-        
-        .spinner {
-            border: 4px solid #f3f3f7;
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 2s linear infinite;
-            margin: 0 auto 10px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
         
         .results-section {
@@ -153,22 +124,9 @@
             font-weight: 600;
         }
         
-        tr:hover {
-            background-color: #f5f7fa;
-        }
-        
         .word-count {
             font-weight: bold;
             color: #3498db;
-        }
-        
-        .error-message {
-            background-color: #fee;
-            color: #c33;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 10px 0;
-            border-left: 4px solid #c33;
         }
         
         footer {
@@ -182,10 +140,6 @@
             .input-section {
                 flex-direction: column;
             }
-            
-            .bible-selector, .text-input {
-                min-width: 100%;
-            }
         }
     </style>
 </head>
@@ -196,35 +150,30 @@
             <p class="description">Compare your text with different Bible versions to see the percentage of unique words that match.</p>
         </header>
         
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p>Loading Bible text data...</p>
-        </div>
-        
-        <div id="error-message" class="error-message" style="display: none;"></div>
-        
         <section class="input-section">
             <div class="bible-selector">
                 <h2>Select Bible Version</h2>
                 <select id="bible-version">
-                    <option value="">Loading versions...</option>
+                    <option value="kjv">King James Version (KJV)</option>
+                    <option value="niv">New International Version (NIV)</option>
+                    <option value="esv">English Standard Version (ESV)</option>
+                    <option value="nasb">New American Standard Bible (NASB)</option>
+                    <option value="nlt">New Living Translation (NLT)</option>
                 </select>
                 <div id="bible-info">
-                    <p>Select a Bible version to see description</p>
+                    <p>Select a Bible version to compare with your text</p>
                 </div>
             </div>
             
             <div class="text-input">
                 <h2>Enter Your Text</h2>
-                <textarea id="user-text" placeholder="Paste your text here...">In the start, the divine being made the sky and the world. The planet was shapeless and vacant, with obscurity covering the profound.</textarea>
-                <button id="compare-btn" disabled>Compare Texts</button>
+                <textarea id="user-text">In the beginning God created the heaven and the earth. And the earth was without form, and void; and darkness was upon the face of the deep.</textarea>
+                <button id="compare-btn">Compare Texts</button>
             </div>
         </section>
         
         <section class="results-section" id="results-section">
-            <div class="results-header">
-                <h2>Comparison Results</h2>
-            </div>
+            <h2>Comparison Results</h2>
             
             <div class="percentage-display" id="percentage-result"></div>
             
@@ -250,247 +199,78 @@
     </div>
 
     <script>
-        // Simple Bible data manager without complex error handling
-        class BibleDataManager {
-            constructor() {
-                this.bibleData = null;
-                this.loadedVersion = null;
-            }
+        // Simple Bible texts (no external files needed)
+        const bibleTexts = {
+            kjv: "In the beginning God created the heaven and the earth. And the earth was without form, and void; and darkness was upon the face of the deep. And the Spirit of God moved upon the face of the waters. And God said, Let there be light: and there was light. And God saw the light, that it was good: and God divided the light from the darkness.",
+            niv: "In the beginning God created the heavens and the earth. Now the earth was formless and empty, darkness was over the surface of the deep, and the Spirit of God was hovering over the waters. And God said, 'Let there be light,' and there was light. God saw that the light was good, and he separated the light from the darkness.",
+            esv: "In the beginning, God created the heavens and the earth. The earth was without form and void, and darkness was over the face of the deep. And the Spirit of God was hovering over the face of the waters. And God said, 'Let there be light,' and there was light. And God saw that the light was good. And God separated the light from the darkness.",
+            nasb: "In the beginning God created the heavens and the earth. And the earth was a formless and desolate emptiness, and darkness was over the surface of the deep, and the Spirit of God was hovering over the surface of the waters. Then God said, 'Let there be light'; and there was light. God saw that the light was good; and God separated the light from the darkness.",
+            nlt: "In the beginning God created the heavens and the earth. The earth was formless and empty, and darkness covered the deep waters. And the Spirit of God was hovering over the surface of the waters. Then God said, 'Let there be light,' and there was light. And God saw that the light was good. Then he separated the light from the darkness."
+        };
 
-            async loadBibleManifest() {
-                try {
-                    const response = await fetch('./data/manifest.json');
-                    if (!response.ok) throw new Error('Manifest not found');
-                    return await response.json();
-                } catch (error) {
-                    console.warn('Using fallback manifest');
-                    return {
-                        versions: [
-                            { id: 'kjv', name: 'King James Version (KJV)', file: './data/kjv.json' },
-                            { id: 'niv', name: 'New International Version (NIV)', file: './data/niv.json' },
-                            { id: 'esv', name: 'English Standard Version (ESV)', file: './data/esv.json' },
-                            { id: 'nasb', name: 'New American Standard Bible (NASB)', file: './data/nasb.json' },
-                            { id: 'nlt', name: 'New Living Translation (NLT)', file: './data/nlt.json' }
-                        ],
-                        descriptions: {
-                            kjv: "A classic English translation completed in 1611.",
-                            niv: "A modern English translation.",
-                            esv: "An essentially literal translation.",
-                            nasb: "Known for literal translation approach.",
-                            nlt: "A thought-for-thought translation."
-                        }
-                    };
-                }
-            }
-
-            async loadBibleVersion(versionId) {
-                if (this.loadedVersion === versionId && this.bibleData) {
-                    return this.bibleData;
-                }
-
-                try {
-                    const manifest = await this.loadBibleManifest();
-                    const versionInfo = manifest.versions.find(v => v.id === versionId);
-                    
-                    if (!versionInfo) throw new Error('Version not found');
-                    
-                    // Fix the path if it starts with /
-                    let filePath = versionInfo.file;
-                    if (filePath.startsWith('/')) {
-                        filePath = '.' + filePath;
-                    }
-                    
-                    const response = await fetch(filePath);
-                    if (!response.ok) throw new Error('Bible file not found');
-                    
-                    const bibleFileData = await response.json();
-                    
-                    // Extract text from various possible structures
-                    let bibleText = '';
-                    if (bibleFileData.text) {
-                        bibleText = bibleFileData.text;
-                    } else if (bibleFileData.fullText) {
-                        bibleText = bibleFileData.fullText;
-                    } else if (typeof bibleFileData === 'string') {
-                        bibleText = bibleFileData;
-                    } else {
-                        // Fallback to sample text
-                        throw new Error('Could not extract text');
-                    }
-                    
-                    this.bibleData = bibleText;
-                    this.loadedVersion = versionId;
-                    return this.bibleData;
-                    
-                } catch (error) {
-                    console.warn('Using sample text for:', versionId);
-                    // Sample texts as fallback
-                    const sampleTexts = {
-                        kjv: "In the beginning God created the heaven and the earth. And the earth was without form, and void; and darkness was upon the face of the deep. And the Spirit of God moved upon the face of the waters. And God said, Let there be light: and there was light. And God saw the light, that it was good: and God divided the light from the darkness.",
-                        niv: "In the beginning God created the heavens and the earth. Now the earth was formless and empty, darkness was over the surface of the deep, and the Spirit of God was hovering over the waters. And God said, 'Let there be light,' and there was light. God saw that the light was good, and he separated the light from the darkness.",
-                        esv: "In the beginning, God created the heavens and the earth. The earth was without form and void, and darkness was over the face of the deep. And the Spirit of God was hovering over the face of the waters. And God said, 'Let there be light,' and there was light. And God saw that the light was good. And God separated the light from the darkness.",
-                        nasb: "In the beginning God created the heavens and the earth. And the earth was a formless and desolate emptiness, and darkness was over the surface of the deep, and the Spirit of God was hovering over the surface of the waters. Then God said, 'Let there be light'; and there was light. God saw that the light was good; and God separated the light from the darkness.",
-                        nlt: "In the beginning God created the heavens and the earth. The earth was formless and empty, and darkness covered the deep waters. And the Spirit of God was hovering over the surface of the waters. Then God said, 'Let there be light,' and there was light. And God saw that the light was good. Then he separated the light from the darkness."
-                    };
-                    
-                    this.bibleData = sampleTexts[versionId] || sampleTexts.kjv;
-                    this.loadedVersion = versionId;
-                    return this.bibleData;
-                }
-            }
-        }
-
-        // DOM elements
+        // Get DOM elements
         const bibleVersionSelect = document.getElementById('bible-version');
-        const bibleInfoDiv = document.getElementById('bible-info');
         const userTextArea = document.getElementById('user-text');
         const compareButton = document.getElementById('compare-btn');
         const resultsSection = document.getElementById('results-section');
         const percentageResult = document.getElementById('percentage-result');
         const resultsTable = document.getElementById('results-table');
         const commonWordsElement = document.getElementById('common-words');
-        const loadingElement = document.getElementById('loading');
-        const errorMessage = document.getElementById('error-message');
 
-        const bibleManager = new BibleDataManager();
-
-        // Show/hide loading
-        function showLoading(show) {
-            loadingElement.style.display = show ? 'block' : 'none';
-        }
-
-        // Show error message
-        function showError(message) {
-            errorMessage.textContent = message;
-            errorMessage.style.display = 'block';
-        }
-
-        // Hide error message
-        function hideError() {
-            errorMessage.style.display = 'none';
-        }
-
-        // Initialize the application
-        async function initApp() {
-            try {
-                showLoading(true);
-                hideError();
-                
-                const manifest = await bibleManager.loadBibleManifest();
-                
-                // Populate dropdown
-                bibleVersionSelect.innerHTML = manifest.versions.map(version => 
-                    `<option value="${version.id}">${version.name}</option>`
-                ).join('');
-                
-                // Set up event listeners
-                bibleVersionSelect.addEventListener('change', handleVersionChange);
-                compareButton.addEventListener('click', handleCompare);
-                
-                compareButton.disabled = false;
-                showLoading(false);
-                
-            } catch (error) {
-                console.error('Error initializing app:', error);
-                showError('Error loading Bible versions. Using fallback data.');
-                showLoading(false);
-                
-                // Fallback dropdown
-                bibleVersionSelect.innerHTML = `
-                    <option value="kjv">King James Version (KJV)</option>
-                    <option value="niv">New International Version (NIV)</option>
-                    <option value="esv">English Standard Version (ESV)</option>
-                    <option value="nasb">New American Standard Bible (NASB)</option>
-                    <option value="nlt">New Living Translation (NLT)</option>
-                `;
-                
-                bibleVersionSelect.addEventListener('change', handleVersionChange);
-                compareButton.addEventListener('click', handleCompare);
-                compareButton.disabled = false;
-            }
-        }
-
-        async function handleVersionChange() {
-            const selectedVersion = bibleVersionSelect.value;
-            if (!selectedVersion) return;
-
-            try {
-                const manifest = await bibleManager.loadBibleManifest();
-                const description = manifest.descriptions[selectedVersion] || 'Description not available.';
-                bibleInfoDiv.innerHTML = `<p><strong>${bibleVersionSelect.options[bibleVersionSelect.selectedIndex].text}</strong>: ${description}</p>`;
-            } catch (error) {
-                bibleInfoDiv.innerHTML = `<p>Select a version to compare texts.</p>`;
-            }
-        }
-
-        async function handleCompare() {
+        // Add event listener to button
+        compareButton.addEventListener('click', function() {
             const selectedVersion = bibleVersionSelect.value;
             const userText = userTextArea.value.trim();
             
-            if (!selectedVersion) {
-                showError('Please select a Bible version.');
-                return;
-            }
-            
             if (!userText) {
-                showError('Please enter some text to compare.');
+                alert('Please enter some text to compare.');
                 return;
             }
             
-            try {
-                hideError();
-                showLoading(true);
-                
-                const bibleText = await bibleManager.loadBibleVersion(selectedVersion);
-                const result = calculateWordOverlap(bibleText, userText);
-                displayResults(result);
-                
-                showLoading(false);
-                
-            } catch (error) {
-                showError('Error comparing texts. Please try again.');
-                console.error('Comparison error:', error);
-                showLoading(false);
-            }
-        }
+            const bibleText = bibleTexts[selectedVersion] || bibleTexts.kjv;
+            const result = calculateWordOverlap(bibleText, userText);
+            displayResults(result, selectedVersion);
+        });
 
+        // Calculate word overlap
         function calculateWordOverlap(text1, text2) {
             // Clean and split into words
-            const cleanText = (text) => text.toLowerCase().replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
+            const cleanText = (text) => {
+                return text.toLowerCase()
+                    .replace(/[^\w\s]/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+            };
             
             const words1 = cleanText(text1).split(' ').filter(word => word.length > 0);
             const words2 = cleanText(text2).split(' ').filter(word => word.length > 0);
             
-            const uniqueWords1 = new Set(words1);
-            const uniqueWords2 = new Set(words2);
+            const uniqueWords1 = [...new Set(words1)];
+            const uniqueWords2 = [...new Set(words2)];
             
-            const commonWords = new Set();
-            for (const word of uniqueWords1) {
-                if (uniqueWords2.has(word)) {
-                    commonWords.add(word);
-                }
-            }
+            const commonWords = uniqueWords1.filter(word => uniqueWords2.includes(word));
             
-            const percentage = uniqueWords1.size > 0 ? 
-                (commonWords.size / uniqueWords1.size) * 100 : 0;
+            const percentage = uniqueWords1.length > 0 ? 
+                (commonWords.length / uniqueWords1.length) * 100 : 0;
             
             return {
-                uniqueWords1: uniqueWords1.size,
-                uniqueWords2: uniqueWords2.size,
-                commonWords: commonWords.size,
+                uniqueWords1: uniqueWords1.length,
+                uniqueWords2: uniqueWords2.length,
+                commonWords: commonWords.length,
                 percentage: percentage,
-                commonWordsList: Array.from(commonWords).sort()
+                commonWordsList: commonWords.sort()
             };
         }
 
-        function displayResults(result) {
+        // Display results
+        function displayResults(result, version) {
             resultsSection.style.display = 'block';
             percentageResult.textContent = `${result.percentage.toFixed(2)}% Match`;
             
             const tbody = resultsTable.querySelector('tbody');
             tbody.innerHTML = `
                 <tr>
-                    <td>Unique words in selected Bible version</td>
+                    <td>Unique words in Bible version</td>
                     <td class="word-count">${result.uniqueWords1}</td>
                 </tr>
                 <tr>
@@ -509,12 +289,10 @@
             resultsSection.scrollIntoView({ behavior: 'smooth' });
         }
 
-        // Initialize when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            initApp().catch(error => {
-                console.error('Failed to initialize app:', error);
-                showError('Failed to initialize application. Please refresh the page.');
-            });
+        // Initialize with sample comparison
+        window.addEventListener('load', function() {
+            // Auto-run comparison on page load
+            compareButton.click();
         });
     </script>
 </body>
