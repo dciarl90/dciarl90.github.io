@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bible Text Comparison Tool</title>
     <style>
+        /* Your existing CSS remains the same */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -162,6 +163,16 @@
             color: #3498db;
         }
         
+        .debug-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            display: none;
+        }
+        
         footer {
             text-align: center;
             margin-top: 40px;
@@ -207,6 +218,7 @@
                 <h2>Enter Your Text</h2>
                 <textarea id="user-text" placeholder="Paste your text here..."></textarea>
                 <button id="compare-btn" disabled>Compare Texts</button>
+                <button id="debug-btn" style="background-color: #e74c3c; margin-left: 10px;">Debug Info</button>
             </div>
         </section>
         
@@ -231,6 +243,11 @@
                 <h3>Common Words</h3>
                 <p id="common-words"></p>
             </div>
+            
+            <div class="debug-info" id="debug-info">
+                <h3>Debug Information</h3>
+                <pre id="debug-content"></pre>
+            </div>
         </section>
         
         <footer>
@@ -245,26 +262,40 @@
                 this.bibleData = null;
                 this.loadedVersion = null;
                 this.manifest = null;
+                this.debugInfo = [];
+            }
+
+            addDebugInfo(message, data = null) {
+                const timestamp = new Date().toLocaleTimeString();
+                const info = `[${timestamp}] ${message}`;
+                this.debugInfo.push(info);
+                if (data) {
+                    this.debugInfo.push(JSON.stringify(data, null, 2));
+                }
+                console.log(info, data || '');
             }
 
             // Load the Bible versions manifest
             async loadBibleManifest() {
                 try {
-                    // Fetch the manifest file from the data directory
+                    this.addDebugInfo('Loading manifest from: ./bible-comparison-tool/data/manifest.json');
+                    
                     const response = await fetch('./bible-comparison-tool/data/manifest.json');
                     
                     if (!response.ok) {
-                        throw new Error(`Failed to load manifest: ${response.status} ${response.statusText}`);
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     }
                     
-                    this.manifest = await response.json();
-                    return this.manifest;
+                    const manifest = await response.json();
+                    this.addDebugInfo('Manifest loaded successfully', manifest);
+                    this.manifest = manifest;
+                    return manifest;
                     
                 } catch (error) {
-                    console.error('Error loading Bible manifest:', error);
+                    this.addDebugInfo('ERROR loading manifest:', error);
                     
-                    // Fallback to local manifest if file loading fails
-                    this.manifest = {
+                    // Fallback to local manifest
+                    const fallbackManifest = {
                         versions: [
                             { id: 'kjv', name: 'King James Version (KJV)', file: './bible-comparison-tool/data/kjv.json' },
                             { id: 'niv', name: 'New International Version (NIV)', file: './bible-comparison-tool/data/niv.json' },
@@ -281,22 +312,22 @@
                         }
                     };
                     
-                    console.warn('Using fallback manifest data');
-                    return this.manifest;
+                    this.addDebugInfo('Using fallback manifest');
+                    this.manifest = fallbackManifest;
+                    return fallbackManifest;
                 }
             }
 
             // Load specific Bible version text
             async loadBibleVersion(versionId) {
                 if (this.loadedVersion === versionId && this.bibleData) {
-                    return this.bibleData; // Already loaded
+                    this.addDebugInfo(`Using cached version: ${versionId}`);
+                    return this.bibleData;
                 }
 
                 try {
-                    // Show loading indicator
                     showLoading(true);
                     
-                    // Load manifest if not already loaded
                     if (!this.manifest) {
                         await this.loadBibleManifest();
                     }
@@ -307,37 +338,24 @@
                         throw new Error(`Version ${versionId} not found in manifest`);
                     }
                     
-                    console.log(`Loading Bible version from: ${versionInfo.file}`);
+                    this.addDebugInfo(`Loading Bible version: ${versionId} from ${versionInfo.file}`);
                     
-                    // Load the specific Bible version file
                     const response = await fetch(versionInfo.file);
                     
                     if (!response.ok) {
-                        throw new Error(`Failed to load Bible version: ${response.status} ${response.statusText}`);
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     }
                     
                     const bibleFileData = await response.json();
-                    console.log('Loaded Bible file data:', bibleFileData);
+                    this.addDebugInfo(`Raw Bible data loaded for ${versionId}`, bibleFileData);
                     
-                    // Extract the text based on the JSON structure
-                    let bibleText;
-                    if (bibleFileData.fullText) {
-                        // If using the optimized format with fullText field
-                        bibleText = bibleFileData.fullText;
-                    } else if (bibleFileData.text) {
-                        // If using the basic format with text field
-                        bibleText = bibleFileData.text;
-                    } else if (bibleFileData.books) {
-                        // If using the structured format with books/chapters/verses
-                        bibleText = this.extractTextFromStructuredData(bibleFileData.books);
-                    } else {
-                        // If the JSON contains the text directly at root level
-                        bibleText = this.findTextInObject(bibleFileData);
-                    }
+                    let bibleText = this.extractTextFromData(bibleFileData);
                     
                     if (!bibleText) {
                         throw new Error('Could not extract text from Bible data');
                     }
+                    
+                    this.addDebugInfo(`Text extracted successfully. Length: ${bibleText.length} characters`);
                     
                     this.bibleData = bibleText;
                     this.loadedVersion = versionId;
@@ -346,11 +364,11 @@
                     return this.bibleData;
                     
                 } catch (error) {
-                    console.error(`Error loading Bible version ${versionId}:`, error);
+                    this.addDebugInfo(`ERROR loading Bible version ${versionId}:`, error);
                     showLoading(false);
                     
-                    // Fallback to sample text if file loading fails
-                    console.warn('Using sample text for demonstration');
+                    // Fallback to sample text
+                    this.addDebugInfo('Using sample text as fallback');
                     const sampleTexts = {
                         kjv: "In the beginning God created the heaven and the earth. And the earth was without form, and void; and darkness was upon the face of the deep. And the Spirit of God moved upon the face of the waters. And God said, Let there be light: and there was light. And God saw the light, that it was good: and God divided the light from the darkness.",
                         niv: "In the beginning God created the heavens and the earth. Now the earth was formless and empty, darkness was over the surface of the deep, and the Spirit of God was hovering over the waters. And God said, 'Let there be light,' and there was light. God saw that the light was good, and he separated the light from the darkness.",
@@ -365,42 +383,77 @@
                 }
             }
 
-            // Helper function to extract text from structured book/chapter/verse data
+            extractTextFromData(data) {
+                // Try different possible structures
+                if (typeof data === 'string') {
+                    return data;
+                }
+                
+                if (data.fullText) return data.fullText;
+                if (data.text) return data.text;
+                if (data.content) return data.content;
+                
+                if (data.books && Array.isArray(data.books)) {
+                    return this.extractTextFromStructuredData(data.books);
+                }
+                
+                // Recursively search for text
+                return this.findTextInObject(data);
+            }
+
             extractTextFromStructuredData(books) {
                 let fullText = '';
-                
                 for (const book of books) {
-                    for (const chapter of book.chapters) {
-                        for (const verse of chapter.verses) {
-                            fullText += verse.text + ' ';
+                    if (book.chapters) {
+                        for (const chapter of book.chapters) {
+                            if (chapter.verses) {
+                                for (const verse of chapter.verses) {
+                                    if (verse.text) {
+                                        fullText += verse.text + ' ';
+                                    }
+                                }
+                            }
                         }
                     }
                 }
-                
                 return fullText.trim();
             }
 
-            // Helper function to recursively find text in object
-            findTextInObject(obj) {
+            findTextInObject(obj, depth = 0) {
+                if (depth > 5) return null; // Prevent infinite recursion
+                
                 if (typeof obj === 'string') {
-                    return obj;
+                    return obj.length > 50 ? obj : null; // Only return substantial strings
                 }
                 
                 if (Array.isArray(obj)) {
-                    return obj.map(item => this.findTextInObject(item)).filter(Boolean).join(' ');
+                    const texts = obj.map(item => this.findTextInObject(item, depth + 1)).filter(Boolean);
+                    return texts.length > 0 ? texts.join(' ') : null;
                 }
                 
                 if (typeof obj === 'object' && obj !== null) {
-                    for (let key in obj) {
-                        if (key === 'text' || key === 'content' || key === 'verseText') {
+                    // Check common text-containing keys first
+                    const textKeys = ['text', 'content', 'verseText', 'body', 'passage'];
+                    for (let key of textKeys) {
+                        if (obj[key] && typeof obj[key] === 'string' && obj[key].length > 50) {
                             return obj[key];
                         }
-                        const result = this.findTextInObject(obj[key]);
-                        if (result) return result;
+                    }
+                    
+                    // Recursively search all properties
+                    for (let key in obj) {
+                        if (obj.hasOwnProperty(key)) {
+                            const result = this.findTextInObject(obj[key], depth + 1);
+                            if (result) return result;
+                        }
                     }
                 }
                 
                 return null;
+            }
+
+            getDebugInfo() {
+                return this.debugInfo.join('\n');
             }
         }
 
@@ -409,32 +462,48 @@
         const bibleInfoDiv = document.getElementById('bible-info');
         const userTextArea = document.getElementById('user-text');
         const compareButton = document.getElementById('compare-btn');
+        const debugButton = document.getElementById('debug-btn');
         const resultsSection = document.getElementById('results-section');
         const percentageResult = document.getElementById('percentage-result');
         const resultsTable = document.getElementById('results-table');
         const commonWordsElement = document.getElementById('common-words');
         const loadingElement = document.getElementById('loading');
+        const debugInfoElement = document.getElementById('debug-info');
+        const debugContentElement = document.getElementById('debug-content');
 
         const bibleManager = new BibleDataManager();
 
-        // Initialize the application
+        // Test file existence
+        async function testFile(filePath) {
+            try {
+                const response = await fetch(filePath, { method: 'HEAD' });
+                return response.ok;
+            } catch (error) {
+                return false;
+            }
+        }
+
         async function initApp() {
             try {
                 showLoading(true);
                 
-                // Load Bible manifest
-                const manifest = await bibleManager.loadBibleManifest();
+                // Test if files exist
+                const manifestExists = await testFile('./bible-comparison-tool/data/manifest.json');
+                bibleManager.addDebugInfo(`Manifest file exists: ${manifestExists}`);
                 
-                // Populate version dropdown
+                if (!manifestExists) {
+                    bibleManager.addDebugInfo('WARNING: Manifest file not found at ./bible-comparison-tool/data/manifest.json');
+                    bibleManager.addDebugInfo('Current page URL: ' + window.location.href);
+                }
+                
+                const manifest = await bibleManager.loadBibleManifest();
                 populateVersionDropdown(manifest.versions);
                 
-                // Set up event listeners
                 bibleVersionSelect.addEventListener('change', handleVersionChange);
                 compareButton.addEventListener('click', handleCompare);
+                debugButton.addEventListener('click', showDebugInfo);
                 
-                // Enable compare button
                 compareButton.disabled = false;
-                
                 showLoading(false);
                 
             } catch (error) {
@@ -455,10 +524,8 @@
             if (!selectedVersion) return;
 
             try {
-                // Update Bible info
                 const manifest = await bibleManager.loadBibleManifest();
                 bibleInfoDiv.innerHTML = `<p><strong>${bibleVersionSelect.options[bibleVersionSelect.selectedIndex].text}</strong>: ${manifest.descriptions[selectedVersion]}</p>`;
-                
             } catch (error) {
                 bibleInfoDiv.innerHTML = `<p style="color: red;">Error loading version information</p>`;
             }
@@ -479,10 +546,7 @@
             }
             
             try {
-                // Load the selected Bible version
                 const bibleText = await bibleManager.loadBibleVersion(selectedVersion);
-                
-                // Calculate and display results
                 const result = calculateWordOverlap(bibleText, userText);
                 displayResults(result, selectedVersion);
                 
@@ -494,6 +558,11 @@
 
         function showLoading(show) {
             loadingElement.style.display = show ? 'block' : 'none';
+        }
+
+        function showDebugInfo() {
+            debugContentElement.textContent = bibleManager.getDebugInfo();
+            debugInfoElement.style.display = debugInfoElement.style.display === 'none' ? 'block' : 'none';
         }
 
         function calculateWordOverlap(text1, text2) {
@@ -548,10 +617,8 @@
             resultsSection.scrollIntoView({ behavior: 'smooth' });
         }
 
-        // Initialize the app when page loads
+        // Initialize
         window.addEventListener('load', initApp);
-        
-        // Pre-fill with sample text for demonstration
         window.addEventListener('load', function() {
             userTextArea.value = "In the start, the divine being made the sky and the world. The planet was shapeless and vacant, with obscurity covering the profound.";
         });
