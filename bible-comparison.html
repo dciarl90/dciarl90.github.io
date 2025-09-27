@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bible Text Comparison Tool</title>
     <style>
-        /* Same CSS as before */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -107,7 +106,7 @@
         }
         
         .spinner {
-            border: 4px solid #f3f3f3;
+            border: 4px solid #f3f3f7;
             border-top: 4px solid #3498db;
             border-radius: 50%;
             width: 40px;
@@ -235,7 +234,7 @@
         </section>
         
         <footer>
-            <p>Bible Text Comparison Tool &copy; 2023 | Data loaded from external files</p>
+            <p>Bible Text Comparison Tool &copy; 2025</p>
         </footer>
     </div>
 
@@ -245,6 +244,7 @@
             constructor() {
                 this.bibleData = null;
                 this.loadedVersion = null;
+                this.manifest = null;
             }
 
             // Load the Bible versions manifest
@@ -257,14 +257,14 @@
                         throw new Error(`Failed to load manifest: ${response.status} ${response.statusText}`);
                     }
                     
-                    const manifest = await response.json();
-                    return manifest;
+                    this.manifest = await response.json();
+                    return this.manifest;
                     
                 } catch (error) {
                     console.error('Error loading Bible manifest:', error);
                     
                     // Fallback to local manifest if file loading fails
-                    const fallbackManifest = {
+                    this.manifest = {
                         versions: [
                             { id: 'kjv', name: 'King James Version (KJV)', file: './bible-comparison-tool/data/kjv.json' },
                             { id: 'niv', name: 'New International Version (NIV)', file: './bible-comparison-tool/data/niv.json' },
@@ -282,7 +282,7 @@
                     };
                     
                     console.warn('Using fallback manifest data');
-                    return fallbackManifest;
+                    return this.manifest;
                 }
             }
 
@@ -296,13 +296,18 @@
                     // Show loading indicator
                     showLoading(true);
                     
-                    // First get the manifest to find the correct file path
-                    const manifest = await this.loadBibleManifest();
-                    const versionInfo = manifest.versions.find(v => v.id === versionId);
+                    // Load manifest if not already loaded
+                    if (!this.manifest) {
+                        await this.loadBibleManifest();
+                    }
+                    
+                    const versionInfo = this.manifest.versions.find(v => v.id === versionId);
                     
                     if (!versionInfo) {
                         throw new Error(`Version ${versionId} not found in manifest`);
                     }
+                    
+                    console.log(`Loading Bible version from: ${versionInfo.file}`);
                     
                     // Load the specific Bible version file
                     const response = await fetch(versionInfo.file);
@@ -312,6 +317,7 @@
                     }
                     
                     const bibleFileData = await response.json();
+                    console.log('Loaded Bible file data:', bibleFileData);
                     
                     // Extract the text based on the JSON structure
                     let bibleText;
@@ -325,7 +331,12 @@
                         // If using the structured format with books/chapters/verses
                         bibleText = this.extractTextFromStructuredData(bibleFileData.books);
                     } else {
-                        throw new Error('Unknown Bible data format');
+                        // If the JSON contains the text directly at root level
+                        bibleText = this.findTextInObject(bibleFileData);
+                    }
+                    
+                    if (!bibleText) {
+                        throw new Error('Could not extract text from Bible data');
                     }
                     
                     this.bibleData = bibleText;
@@ -369,39 +380,27 @@
                 return fullText.trim();
             }
 
-            // Load specific Bible version text
-            async loadBibleVersion(versionId) {
-                if (this.loadedVersion === versionId && this.bibleData) {
-                    return this.bibleData; // Already loaded
+            // Helper function to recursively find text in object
+            findTextInObject(obj) {
+                if (typeof obj === 'string') {
+                    return obj;
                 }
-
-                try {
-                    // Show loading indicator
-                    showLoading(true);
-                    
-                    // In a real application, this would fetch from a JSON file
-                    // For demo purposes, we'll use sample data
-                    const sampleTexts = {
-                        kjv: "In the beginning God created the heaven and the earth. And the earth was without form, and void; and darkness was upon the face of the deep. And the Spirit of God moved upon the face of the waters. And God said, Let there be light: and there was light. And God saw the light, that it was good: and God divided the light from the darkness.",
-                        niv: "In the beginning God created the heavens and the earth. Now the earth was formless and empty, darkness was over the surface of the deep, and the Spirit of God was hovering over the waters. And God said, 'Let there be light,' and there was light. God saw that the light was good, and he separated the light from the darkness.",
-                        esv: "In the beginning, God created the heavens and the earth. The earth was without form and void, and darkness was over the face of the deep. And the Spirit of God was hovering over the face of the waters. And God said, 'Let there be light,' and there was light. And God saw that the light was good. And God separated the light from the darkness.",
-                        nasb: "In the beginning God created the heavens and the earth. And the earth was a formless and desolate emptiness, and darkness was over the surface of the deep, and the Spirit of God was hovering over the surface of the waters. Then God said, 'Let there be light'; and there was light. God saw that the light was good; and God separated the light from the darkness.",
-                        nlt: "In the beginning God created the heavens and the earth. The earth was formless and empty, and darkness covered the deep waters. And the Spirit of God was hovering over the surface of the waters. Then God said, 'Let there be light,' and there was light. And God saw that the light was good. Then he separated the light from the darkness."
-                    };
-
-                    // Simulate network delay
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                    
-                    this.bibleData = sampleTexts[versionId];
-                    this.loadedVersion = versionId;
-                    
-                    showLoading(false);
-                    return this.bibleData;
-                } catch (error) {
-                    console.error(`Error loading Bible version ${versionId}:`, error);
-                    showLoading(false);
-                    throw error;
+                
+                if (Array.isArray(obj)) {
+                    return obj.map(item => this.findTextInObject(item)).filter(Boolean).join(' ');
                 }
+                
+                if (typeof obj === 'object' && obj !== null) {
+                    for (let key in obj) {
+                        if (key === 'text' || key === 'content' || key === 'verseText') {
+                            return obj[key];
+                        }
+                        const result = this.findTextInObject(obj[key]);
+                        if (result) return result;
+                    }
+                }
+                
+                return null;
             }
         }
 
@@ -460,9 +459,6 @@
                 const manifest = await bibleManager.loadBibleManifest();
                 bibleInfoDiv.innerHTML = `<p><strong>${bibleVersionSelect.options[bibleVersionSelect.selectedIndex].text}</strong>: ${manifest.descriptions[selectedVersion]}</p>`;
                 
-                // Preload the Bible text (optional - could also load on demand when comparing)
-                // await bibleManager.loadBibleVersion(selectedVersion);
-                
             } catch (error) {
                 bibleInfoDiv.innerHTML = `<p style="color: red;">Error loading version information</p>`;
             }
@@ -500,7 +496,6 @@
             loadingElement.style.display = show ? 'block' : 'none';
         }
 
-        // Existing calculation and display functions (same as before)
         function calculateWordOverlap(text1, text2) {
             const words1 = text1.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(word => word.length > 0);
             const words2 = text2.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(word => word.length > 0);
