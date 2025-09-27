@@ -263,7 +263,7 @@
                 this.manifest = null;
                 this.debugInfo = [];
                 // CORRECT PATH - since HTML is in /bible-comparison-tool/
-                this.basePath = './data/'; // This is correct for your structure
+                this.basePath = '/data/'; // This is correct for your structure
             }
 
             addDebugInfo(message, data = null) {
@@ -501,7 +501,7 @@
                 showLoading(true);
                 
                 // Test if files exist with CORRECT path
-                const manifestPath = './data/manifest.json';
+                const manifestPath = '/data/manifest.json';
                 const manifestExists = await testFile(manifestPath);
                 bibleManager.addDebugInfo(`Manifest file exists: ${manifestExists}`);
                 bibleManager.addDebugInfo(`Testing path: ${manifestPath}`);
