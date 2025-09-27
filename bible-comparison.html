@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bible Text Comparison Tool</title>
+    <style>
+        /* Same CSS as before */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eaeaea;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .description {
+            color: #7f8c8d;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .input-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .bible-selector, .text-input {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+        }
+        
+        select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        
+        textarea {
+            height: 200px;
+            resize: vertical;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        button:hover:not(:disabled) {
+            background-color: #2980b9;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .results-section {
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .percentage-display {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2c3e50;
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eaeaea;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        tr:hover {
+            background-color: #f5f7fa;
+        }
+        
+        .word-count {
+            font-weight: bold;
+            color: #3498db;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .input-section {
+                flex-direction: column;
+            }
+            
+            .bible-selector, .text-input {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Bible Text Comparison Tool</h1>
+            <p class="description">Compare your text with different Bible versions to see the percentage of unique words that match.</p>
+        </header>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Loading Bible text data...</p>
+        </div>
+        
+        <section class="input-section">
+            <div class="bible-selector">
+                <h2>Select Bible Version</h2>
+                <select id="bible-version">
+                    <option value="">Loading versions...</option>
+                </select>
+                <div id="bible-info">
+                    <p>Select a Bible version to see description</p>
+                </div>
+            </div>
+            
+            <div class="text-input">
+                <h2>Enter Your Text</h2>
+                <textarea id="user-text" placeholder="Paste your text here..."></textarea>
+                <button id="compare-btn" disabled>Compare Texts</button>
+            </div>
+        </section>
+        
+        <section class="results-section" id="results-section">
+            <div class="results-header">
+                <h2>Comparison Results</h2>
+            </div>
+            
+            <div class="percentage-display" id="percentage-result"></div>
+            
+            <table id="results-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Count</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            
+            <div style="margin-top: 30px;">
+                <h3>Common Words</h3>
+                <p id="common-words"></p>
+            </div>
+        </section>
+        
+        <footer>
+            <p>Bible Text Comparison Tool &copy; 2023 | Data loaded from external files</p>
+        </footer>
+    </div>
+
+    <script>
+        // Bible data management
+        class BibleDataManager {
+            constructor() {
+                this.bibleData = null;
+                this.loadedVersion = null;
+            }
+
+            // Load the Bible versions manifest
+            async loadBibleManifest() {
+                try {
+                    // In a real app, this would be a JSON file
+                    const manifest = {
+                        versions: [
+                            { id: 'kjv', name: 'King James Version (KJV)', file: 'data/kjv.json' },
+                            { id: 'niv', name: 'New International Version (NIV)', file: 'data/niv.json' },
+                            { id: 'esv', name: 'English Standard Version (ESV)', file: 'data/esv.json' },
+                            { id: 'nasb', name: 'New American Standard Bible (NASB)', file: 'data/nasb.json' },
+                            { id: 'nlt', name: 'New Living Translation (NLT)', file: 'data/nlt.json' }
+                        ],
+                        descriptions: {
+                            kjv: "A classic English translation completed in 1611, known for its majestic language and poetic style.",
+                            niv: "A modern English translation that balances accuracy with readability, first published in 1978.",
+                            esv: "An essentially literal translation that emphasizes word-for-word accuracy and literary excellence.",
+                            nasb: "Known for its literal translation approach, often considered one of the most accurate English translations.",
+                            nlt: "A thought-for-thought translation that prioritizes clarity and readability for modern readers."
+                        }
+                    };
+                    
+                    return manifest;
+                } catch (error) {
+                    console.error('Error loading Bible manifest:', error);
+                    throw error;
+                }
+            }
+
+            // Load specific Bible version text
+            async loadBibleVersion(versionId) {
+                if (this.loadedVersion === versionId && this.bibleData) {
+                    return this.bibleData; // Already loaded
+                }
+
+                try {
+                    // Show loading indicator
+                    showLoading(true);
+                    
+                    // In a real application, this would fetch from a JSON file
+                    // For demo purposes, we'll use sample data
+                    const sampleTexts = {
+                        kjv: "In the beginning God created the heaven and the earth. And the earth was without form, and void; and darkness was upon the face of the deep. And the Spirit of God moved upon the face of the waters. And God said, Let there be light: and there was light. And God saw the light, that it was good: and God divided the light from the darkness.",
+                        niv: "In the beginning God created the heavens and the earth. Now the earth was formless and empty, darkness was over the surface of the deep, and the Spirit of God was hovering over the waters. And God said, 'Let there be light,' and there was light. God saw that the light was good, and he separated the light from the darkness.",
+                        esv: "In the beginning, God created the heavens and the earth. The earth was without form and void, and darkness was over the face of the deep. And the Spirit of God was hovering over the face of the waters. And God said, 'Let there be light,' and there was light. And God saw that the light was good. And God separated the light from the darkness.",
+                        nasb: "In the beginning God created the heavens and the earth. And the earth was a formless and desolate emptiness, and darkness was over the surface of the deep, and the Spirit of God was hovering over the surface of the waters. Then God said, 'Let there be light'; and there was light. God saw that the light was good; and God separated the light from the darkness.",
+                        nlt: "In the beginning God created the heavens and the earth. The earth was formless and empty, and darkness covered the deep waters. And the Spirit of God was hovering over the surface of the waters. Then God said, 'Let there be light,' and there was light. And God saw that the light was good. Then he separated the light from the darkness."
+                    };
+
+                    // Simulate network delay
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    this.bibleData = sampleTexts[versionId];
+                    this.loadedVersion = versionId;
+                    
+                    showLoading(false);
+                    return this.bibleData;
+                } catch (error) {
+                    console.error(`Error loading Bible version ${versionId}:`, error);
+                    showLoading(false);
+                    throw error;
+                }
+            }
+        }
+
+        // DOM elements
+        const bibleVersionSelect = document.getElementById('bible-version');
+        const bibleInfoDiv = document.getElementById('bible-info');
+        const userTextArea = document.getElementById('user-text');
+        const compareButton = document.getElementById('compare-btn');
+        const resultsSection = document.getElementById('results-section');
+        const percentageResult = document.getElementById('percentage-result');
+        const resultsTable = document.getElementById('results-table');
+        const commonWordsElement = document.getElementById('common-words');
+        const loadingElement = document.getElementById('loading');
+
+        const bibleManager = new BibleDataManager();
+
+        // Initialize the application
+        async function initApp() {
+            try {
+                showLoading(true);
+                
+                // Load Bible manifest
+                const manifest = await bibleManager.loadBibleManifest();
+                
+                // Populate version dropdown
+                populateVersionDropdown(manifest.versions);
+                
+                // Set up event listeners
+                bibleVersionSelect.addEventListener('change', handleVersionChange);
+                compareButton.addEventListener('click', handleCompare);
+                
+                // Enable compare button
+                compareButton.disabled = false;
+                
+                showLoading(false);
+                
+            } catch (error) {
+                console.error('Error initializing app:', error);
+                showLoading(false);
+                bibleVersionSelect.innerHTML = '<option value="">Error loading versions</option>';
+            }
+        }
+
+        function populateVersionDropdown(versions) {
+            bibleVersionSelect.innerHTML = versions.map(version => 
+                `<option value="${version.id}">${version.name}</option>`
+            ).join('');
+        }
+
+        async function handleVersionChange() {
+            const selectedVersion = bibleVersionSelect.value;
+            if (!selectedVersion) return;
+
+            try {
+                // Update Bible info
+                const manifest = await bibleManager.loadBibleManifest();
+                bibleInfoDiv.innerHTML = `<p><strong>${bibleVersionSelect.options[bibleVersionSelect.selectedIndex].text}</strong>: ${manifest.descriptions[selectedVersion]}</p>`;
+                
+                // Preload the Bible text (optional - could also load on demand when comparing)
+                // await bibleManager.loadBibleVersion(selectedVersion);
+                
+            } catch (error) {
+                bibleInfoDiv.innerHTML = `<p style="color: red;">Error loading version information</p>`;
+            }
+        }
+
+        async function handleCompare() {
+            const selectedVersion = bibleVersionSelect.value;
+            const userText = userTextArea.value.trim();
+            
+            if (!selectedVersion) {
+                alert('Please select a Bible version.');
+                return;
+            }
+            
+            if (!userText) {
+                alert('Please enter some text to compare.');
+                return;
+            }
+            
+            try {
+                // Load the selected Bible version
+                const bibleText = await bibleManager.loadBibleVersion(selectedVersion);
+                
+                // Calculate and display results
+                const result = calculateWordOverlap(bibleText, userText);
+                displayResults(result, selectedVersion);
+                
+            } catch (error) {
+                alert('Error comparing texts. Please try again.');
+                console.error('Comparison error:', error);
+            }
+        }
+
+        function showLoading(show) {
+            loadingElement.style.display = show ? 'block' : 'none';
+        }
+
+        // Existing calculation and display functions (same as before)
+        function calculateWordOverlap(text1, text2) {
+            const words1 = text1.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(word => word.length > 0);
+            const words2 = text2.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(word => word.length > 0);
+            
+            const uniqueWords1 = new Set(words1);
+            const uniqueWords2 = new Set(words2);
+            
+            const commonWords = new Set();
+            for (const word of uniqueWords1) {
+                if (uniqueWords2.has(word)) {
+                    commonWords.add(word);
+                }
+            }
+            
+            const percentage = uniqueWords1.size > 0 ? 
+                (commonWords.size / uniqueWords1.size) * 100 : 0;
+            
+            return {
+                uniqueWords1: uniqueWords1.size,
+                uniqueWords2: uniqueWords2.size,
+                commonWords: commonWords.size,
+                percentage: percentage,
+                commonWordsList: Array.from(commonWords).sort()
+            };
+        }
+
+        function displayResults(result, version) {
+            resultsSection.style.display = 'block';
+            percentageResult.textContent = `${result.percentage.toFixed(2)}% Match`;
+            
+            const tbody = resultsTable.querySelector('tbody');
+            tbody.innerHTML = `
+                <tr>
+                    <td>Unique words in ${bibleVersionSelect.options[bibleVersionSelect.selectedIndex].text}</td>
+                    <td class="word-count">${result.uniqueWords1}</td>
+                </tr>
+                <tr>
+                    <td>Unique words in your text</td>
+                    <td class="word-count">${result.uniqueWords2}</td>
+                </tr>
+                <tr>
+                    <td>Common words</td>
+                    <td class="word-count">${result.commonWords}</td>
+                </tr>
+            `;
+            
+            commonWordsElement.textContent = result.commonWordsList.length > 0 ? 
+                result.commonWordsList.join(', ') : 'No common words found.';
+            
+            resultsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Initialize the app when page loads
+        window.addEventListener('load', initApp);
+        
+        // Pre-fill with sample text for demonstration
+        window.addEventListener('load', function() {
+            userTextArea.value = "In the start, the divine being made the sky and the world. The planet was shapeless and vacant, with obscurity covering the profound.";
+        });
+    </script>
+</body>
+</html>
