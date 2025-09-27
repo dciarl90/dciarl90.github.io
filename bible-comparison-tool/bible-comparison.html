@@ -262,8 +262,8 @@
                 this.loadedVersion = null;
                 this.manifest = null;
                 this.debugInfo = [];
-                // CORRECT PATH - since HTML is in /bible-comparison-tool/
-                this.basePath = '/data/'; // This is correct for your structure
+                // FIXED PATH - use ./data/ (relative to current directory)
+                this.basePath = './data/';
             }
 
             addDebugInfo(message, data = null) {
@@ -279,7 +279,7 @@
             // Load the Bible versions manifest
             async loadBibleManifest() {
                 try {
-                    // USE THE CORRECT PATH
+                    // FIXED: Use ./data/ (not /data/)
                     const manifestPath = `${this.basePath}manifest.json`;
                     this.addDebugInfo(`Loading manifest from: ${manifestPath}`);
                     this.addDebugInfo(`Full URL: ${window.location.origin}${window.location.pathname.replace(/[^/]*$/, '')}${manifestPath}`);
@@ -501,12 +501,12 @@
                 showLoading(true);
                 
                 // Test if files exist with CORRECT path
-                const manifestPath = '/data/manifest.json';
+                const manifestPath = './data/manifest.json';
                 const manifestExists = await testFile(manifestPath);
                 bibleManager.addDebugInfo(`Manifest file exists: ${manifestExists}`);
                 bibleManager.addDebugInfo(`Testing path: ${manifestPath}`);
                 bibleManager.addDebugInfo(`Current page: ${window.location.href}`);
-                bibleManager.addDebugInfo(`Expected manifest URL: ${window.location.origin}/data/manifest.json`);
+                bibleManager.addDebugInfo(`Expected manifest URL: ${window.location.origin}/bible-comparison-tool/data/manifest.json`);
                 
                 if (!manifestExists) {
                     bibleManager.addDebugInfo('WARNING: Manifest file not found.');
