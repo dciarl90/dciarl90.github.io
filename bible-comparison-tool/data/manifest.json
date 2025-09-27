@@ -5,7 +5,7 @@
             "id": "kjv",
             "name": "King James Version",
             "abbreviation": "KJV",
-            "file": "./bible-comparison-tool/data/kjv.json"
+            "file": "/data/kjv.json"
         }
     ],
     "descriptions": {
