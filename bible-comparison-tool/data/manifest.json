@@ -1,0 +1,42 @@
+{
+    "lastUpdated": "2023-12-01",
+    "versions": [
+        {
+            "id": "kjv",
+            "name": "King James Version",
+            "abbreviation": "KJV",
+            "file": "./bible-comparison-tool/data/kjv.json"
+        },
+        {
+            "id": "niv", 
+            "name": "New International Version",
+            "abbreviation": "NIV",
+            "file": "./bible-comparison-tool/data/niv.json"
+        },
+        {
+            "id": "esv",
+            "name": "English Standard Version", 
+            "abbreviation": "ESV",
+            "file": "./bible-comparison-tool/data/esv.json"
+        },
+        {
+            "id": "nasb",
+            "name": "New American Standard Bible",
+            "abbreviation": "NASB", 
+            "file": "./bible-comparison-tool/data/nasb.json"
+        },
+        {
+            "id": "nlt",
+            "name": "New Living Translation",
+            "abbreviation": "NLT",
+            "file": "./bible-comparison-tool/data/nlt.json"
+        }
+    ],
+    "descriptions": {
+        "kjv": "A classic English translation completed in 1611, known for its majestic language and poetic style.",
+        "niv": "A modern English translation that balances accuracy with readability, first published in 1978.",
+        "esv": "An essentially literal translation that emphasizes word-for-word accuracy and literary excellence.",
+        "nasb": "Known for its literal translation approach, often considered one of the most accurate English translations.",
+        "nlt": "A thought-for-thought translation that prioritizes clarity and readability for modern readers."
+    }
+}
