@@ -91,6 +91,18 @@
             background-color: #2980b9;
         }
         
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 10px;
+            color: #666;
+        }
+        
         .results-section {
             margin-top: 30px;
             display: none;
@@ -129,6 +141,14 @@
             color: #3498db;
         }
         
+        .file-status {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        
         footer {
             text-align: center;
             margin-top: 40px;
@@ -150,15 +170,14 @@
             <p class="description">Compare your text with different Bible versions to see the percentage of unique words that match.</p>
         </header>
         
+        <div class="loading" id="loading">Loading Bible texts...</div>
+        <div class="file-status" id="file-status">Checking Bible text files...</div>
+        
         <section class="input-section">
             <div class="bible-selector">
                 <h2>Select Bible Version</h2>
                 <select id="bible-version">
-                    <option value="kjv">King James Version (KJV)</option>
-                    <option value="niv">New International Version (NIV)</option>
-                    <option value="esv">English Standard Version (ESV)</option>
-                    <option value="nasb">New American Standard Bible (NASB)</option>
-                    <option value="nlt">New Living Translation (NLT)</option>
+                    <option value="">Loading Bible versions...</option>
                 </select>
                 <div id="bible-info">
                     <p>Select a Bible version to compare with your text</p>
@@ -168,7 +187,7 @@
             <div class="text-input">
                 <h2>Enter Your Text</h2>
                 <textarea id="user-text">In the beginning God created the heaven and the earth. And the earth was without form, and void; and darkness was upon the face of the deep.</textarea>
-                <button id="compare-btn">Compare Texts</button>
+                <button id="compare-btn" disabled>Compare Texts</button>
             </div>
         </section>
         
@@ -199,14 +218,18 @@
     </div>
 
     <script>
-        // Simple Bible texts (no external files needed)
-        const bibleTexts = {
-            kjv: "In the beginning God created the heaven and the earth. And the earth was without form, and void; and darkness was upon the face of the deep. And the Spirit of God moved upon the face of the waters. And God said, Let there be light: and there was light. And God saw the light, that it was good: and God divided the light from the darkness.",
-            niv: "In the beginning God created the heavens and the earth. Now the earth was formless and empty, darkness was over the surface of the deep, and the Spirit of God was hovering over the waters. And God said, 'Let there be light,' and there was light. God saw that the light was good, and he separated the light from the darkness.",
-            esv: "In the beginning, God created the heavens and the earth. The earth was without form and void, and darkness was over the face of the deep. And the Spirit of God was hovering over the face of the waters. And God said, 'Let there be light,' and there was light. And God saw that the light was good. And God separated the light from the darkness.",
-            nasb: "In the beginning God created the heavens and the earth. And the earth was a formless and desolate emptiness, and darkness was over the surface of the deep, and the Spirit of God was hovering over the surface of the waters. Then God said, 'Let there be light'; and there was light. God saw that the light was good; and God separated the light from the darkness.",
-            nlt: "In the beginning God created the heavens and the earth. The earth was formless and empty, and darkness covered the deep waters. And the Spirit of God was hovering over the surface of the waters. Then God said, 'Let there be light,' and there was light. And God saw that the light was good. Then he separated the light from the darkness."
+        // Bible file paths - using your actual file structure
+        const bibleFiles = {
+            kjv: './data/kjv.json',
+            niv: './data/niv.json', 
+            esv: './data/esv.json',
+            nasb: './data/nasb.json',
+            nlt: './data/nlt.json'
         };
+
+        // Cache for loaded Bible texts
+        const bibleTextsCache = {};
+        let filesLoaded = false;
 
         // Get DOM elements
         const bibleVersionSelect = document.getElementById('bible-version');
@@ -216,25 +239,128 @@
         const percentageResult = document.getElementById('percentage-result');
         const resultsTable = document.getElementById('results-table');
         const commonWordsElement = document.getElementById('common-words');
+        const loadingElement = document.getElementById('loading');
+        const fileStatusElement = document.getElementById('file-status');
 
-        // Add event listener to button
-        compareButton.addEventListener('click', function() {
-            const selectedVersion = bibleVersionSelect.value;
-            const userText = userTextArea.value.trim();
-            
-            if (!userText) {
-                alert('Please enter some text to compare.');
-                return;
+        // Load Bible text from JSON file
+        async function loadBibleText(version) {
+            // Return cached text if already loaded
+            if (bibleTextsCache[version]) {
+                return bibleTextsCache[version];
             }
+
+            const filePath = bibleFiles[version];
+            if (!filePath) {
+                throw new Error(`No file path found for version: ${version}`);
+            }
+
+            try {
+                const response = await fetch(filePath);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Extract text from JSON structure
+                let bibleText = '';
+                if (data.text) {
+                    bibleText = data.text;
+                } else if (data.fullText) {
+                    bibleText = data.fullText;
+                } else if (typeof data === 'string') {
+                    bibleText = data;
+                } else {
+                    // Try to find text in the object
+                    bibleText = JSON.stringify(data);
+                }
+                
+                // Cache the result
+                bibleTextsCache[version] = bibleText;
+                return bibleText;
+                
+            } catch (error) {
+                console.error(`Error loading ${version}:`, error);
+                throw error;
+            }
+        }
+
+        // Check if Bible files exist and load them
+        async function initializeBibleTexts() {
+            showLoading(true);
+            fileStatusElement.textContent = 'Loading Bible text files...';
             
-            const bibleText = bibleTexts[selectedVersion] || bibleTexts.kjv;
-            const result = calculateWordOverlap(bibleText, userText);
-            displayResults(result, selectedVersion);
-        });
+            const versions = Object.keys(bibleFiles);
+            let loadedCount = 0;
+            let errorCount = 0;
+
+            // Try to load each Bible version
+            for (const version of versions) {
+                try {
+                    await loadBibleText(version);
+                    loadedCount++;
+                    fileStatusElement.textContent = `Loaded ${loadedCount} of ${versions.length} Bible versions...`;
+                } catch (error) {
+                    errorCount++;
+                    console.warn(`Could not load ${version}:`, error);
+                }
+            }
+
+            showLoading(false);
+            
+            if (loadedCount > 0) {
+                fileStatusElement.textContent = `✅ Successfully loaded ${loadedCount} Bible versions from JSON files`;
+                if (errorCount > 0) {
+                    fileStatusElement.textContent += ` (${errorCount} failed to load)`;
+                }
+                filesLoaded = true;
+            } else {
+                fileStatusElement.textContent = '❌ Could not load any Bible versions from JSON files. Using sample texts.';
+                // Fallback to sample texts
+                loadSampleTexts();
+                filesLoaded = true;
+            }
+
+            // Enable the compare button
+            compareButton.disabled = false;
+            populateVersionDropdown();
+        }
+
+        // Fallback sample texts
+        function loadSampleTexts() {
+            const sampleTexts = {
+                kjv: "In the beginning God created the heaven and the earth. And the earth was without form, and void; and darkness was upon the face of the deep. And the Spirit of God moved upon the face of the waters. And God said, Let there be light: and there was light. And God saw the light, that it was good: and God divided the light from the darkness.",
+                niv: "In the beginning God created the heavens and the earth. Now the earth was formless and empty, darkness was over the surface of the deep, and the Spirit of God was hovering over the waters. And God said, 'Let there be light,' and there was light. God saw that the light was good, and he separated the light from the darkness.",
+                esv: "In the beginning, God created the heavens and the earth. The earth was without form and void, and darkness was over the face of the deep. And the Spirit of God was hovering over the face of the waters. And God said, 'Let there be light,' and there was light. And God saw that the light was good. And God separated the light from the darkness.",
+                nasb: "In the beginning God created the heavens and the earth. And the earth was a formless and desolate emptiness, and darkness was over the surface of the deep, and the Spirit of God was hovering over the surface of the waters. Then God said, 'Let there be light'; and there was light. God saw that the light was good; and God separated the light from the darkness.",
+                nlt: "In the beginning God created the heavens and the earth. The earth was formless and empty, and darkness covered the deep waters. And the Spirit of God was hovering over the surface of the waters. Then God said, 'Let there be light,' and there was light. And God saw that the light was good. Then he separated the light from the darkness."
+            };
+            
+            Object.assign(bibleTextsCache, sampleTexts);
+        }
+
+        // Populate version dropdown
+        function populateVersionDropdown() {
+            const versions = [
+                { id: 'kjv', name: 'King James Version (KJV)' },
+                { id: 'niv', name: 'New International Version (NIV)' },
+                { id: 'esv', name: 'English Standard Version (ESV)' },
+                { id: 'nasb', name: 'New American Standard Bible (NASB)' },
+                { id: 'nlt', name: 'New Living Translation (NLT)' }
+            ];
+            
+            bibleVersionSelect.innerHTML = versions.map(version => 
+                `<option value="${version.id}">${version.name}</option>`
+            ).join('');
+        }
+
+        // Show/hide loading
+        function showLoading(show) {
+            loadingElement.style.display = show ? 'block' : 'none';
+        }
 
         // Calculate word overlap
         function calculateWordOverlap(text1, text2) {
-            // Clean and split into words
             const cleanText = (text) => {
                 return text.toLowerCase()
                     .replace(/[^\w\s]/g, ' ')
@@ -289,10 +415,50 @@
             resultsSection.scrollIntoView({ behavior: 'smooth' });
         }
 
-        // Initialize with sample comparison
+        // Compare button handler
+        compareButton.addEventListener('click', async function() {
+            const selectedVersion = bibleVersionSelect.value;
+            const userText = userTextArea.value.trim();
+            
+            if (!selectedVersion) {
+                alert('Please select a Bible version.');
+                return;
+            }
+            
+            if (!userText) {
+                alert('Please enter some text to compare.');
+                return;
+            }
+            
+            try {
+                showLoading(true);
+                fileStatusElement.textContent = `Loading ${selectedVersion} text...`;
+                
+                // Load the Bible text (will use cache if already loaded)
+                const bibleText = await loadBibleText(selectedVersion);
+                
+                fileStatusElement.textContent = `✅ Comparing with ${selectedVersion} text (${bibleText.length} characters)`;
+                showLoading(false);
+                
+                const result = calculateWordOverlap(bibleText, userText);
+                displayResults(result, selectedVersion);
+                
+            } catch (error) {
+                fileStatusElement.textContent = `❌ Error loading ${selectedVersion}: ${error.message}`;
+                showLoading(false);
+                alert('Error comparing texts. Please try again.');
+            }
+        });
+
+        // Initialize when page loads
         window.addEventListener('load', function() {
-            // Auto-run comparison on page load
-            compareButton.click();
+            initializeBibleTexts().catch(error => {
+                console.error('Initialization error:', error);
+                fileStatusElement.textContent = '❌ Error initializing. Using sample texts.';
+                loadSampleTexts();
+                populateVersionDropdown();
+                compareButton.disabled = false;
+            });
         });
     </script>
 </body>
