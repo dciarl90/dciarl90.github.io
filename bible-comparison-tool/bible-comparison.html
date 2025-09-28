@@ -94,6 +94,7 @@
             font-family: monospace;
             font-size: 12px;
             white-space: pre-wrap;
+            display: none; /* Hidden by default */
         }
         
         .file-info {
@@ -106,6 +107,16 @@
         .success { color: green; }
         .error { color: red; }
         .warning { color: orange; }
+        
+        .debug-toggle {
+            background-color: #95a5a6 !important;
+            font-size: 14px !important;
+            padding: 8px 15px !important;
+        }
+        
+        .debug-toggle:hover {
+            background-color: #7f8c8d !important;
+        }
     </style>
 </head>
 <body>
@@ -116,7 +127,7 @@
         </header>
 
         <div class="file-info" id="file-info">
-            Testing file accessibility...
+            Loading Bible text files...
         </div>
 
         <section class="input-section">
@@ -125,8 +136,8 @@
                 <select id="bible-version">
                     <option value="">Select a version...</option>
                 </select>
-                <button onclick="testAllFiles()">Test All JSON Files</button>
                 <button onclick="loadSelectedVersion()">Load Selected Version</button>
+                <button class="debug-toggle" onclick="toggleDebug()">Show Debug Info</button>
             </div>
             
             <div class="text-input">
@@ -169,6 +180,19 @@
             debugOutput.innerHTML += `[${timestamp}] ${prefix}${message}\n`;
             debugOutput.scrollTop = debugOutput.scrollHeight;
             console.log(message);
+        }
+
+        function toggleDebug() {
+            const debugPanel = document.getElementById('debug-output');
+            const toggleButton = document.querySelector('.debug-toggle');
+            
+            if (debugPanel.style.display === 'none') {
+                debugPanel.style.display = 'block';
+                toggleButton.textContent = 'Hide Debug Info';
+            } else {
+                debugPanel.style.display = 'none';
+                toggleButton.textContent = 'Show Debug Info';
+            }
         }
 
         // Test if a specific file exists and is valid JSON
@@ -257,6 +281,7 @@
             
             log(`Loading ${version}...`);
             await testFile(version);
+            updateVersionDropdown();
         }
 
         // Update the version dropdown
@@ -267,7 +292,7 @@
                 const isLoaded = loadedBibleTexts[version];
                 const status = isLoaded ? '✅' : '❌';
                 bibleVersionSelect.innerHTML += 
-                    `<option value="${version}">${status} ${version.toUpperCase()} - ${isLoaded ? 'Loaded' : 'Not loaded'}</option>`;
+                    `<option value="${version}">${status} ${version.toUpperCase()} - ${isLoaded ? 'Loaded' : 'Click to load'}</option>`;
             }
         }
 
@@ -288,11 +313,9 @@
             
             const bibleText = loadedBibleTexts[version];
             if (!bibleText) {
-                alert(`Bible text for ${version} is not loaded. Please test the file first.`);
+                alert(`Bible text for ${version} is not loaded. Please click "Load Selected Version" first.`);
                 return;
             }
-            
-            log(`Comparing ${version} (${bibleText.length} chars) with user text (${userText.length} chars)`);
             
             const result = calculateWordOverlap(bibleText, userText);
             displayResults(result, version);
@@ -325,23 +348,53 @@
         function displayResults(result, version) {
             document.getElementById('results-section').style.display = 'block';
             document.getElementById('percentage-result').innerHTML = 
-                `<h3>${result.percentage.toFixed(2)}% Match with ${version.toUpperCase()}</h3>`;
+                `<h3 style="color: #2c3e50; text-align: center;">${result.percentage.toFixed(2)}% Match with ${version.toUpperCase()}</h3>`;
             
             document.getElementById('results-details').innerHTML = `
-                <p><strong>Unique words in Bible:</strong> ${result.uniqueWords1}</p>
-                <p><strong>Unique words in your text:</strong> ${result.uniqueWords2}</p>
-                <p><strong>Common words:</strong> ${result.commonWords}</p>
-                <p><strong>Common words list:</strong> ${result.commonWordsList.join(', ')}</p>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                    <tr>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Unique words in Bible version:</strong></td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee; color: #3498db; font-weight: bold;">${result.uniqueWords1}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Unique words in your text:</strong></td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee; color: #3498db; font-weight: bold;">${result.uniqueWords2}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px;"><strong>Common words found:</strong></td>
+                        <td style="padding: 10px; color: #3498db; font-weight: bold;">${result.commonWords}</td>
+                    </tr>
+                </table>
+                <div style="margin-top: 20px;">
+                    <strong>Common words:</strong> ${result.commonWordsList.join(', ')}
+                </div>
             `;
+            
+            // Scroll to results
+            document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
         }
 
-        // Initialize
-        window.addEventListener('load', function() {
-            log('Page loaded. Click "Test All JSON Files" to check your Bible files.');
+        // Initialize - auto-load all files
+        window.addEventListener('load', async function() {
+            fileInfo.innerHTML = 'Loading Bible files...';
+            
+            // Test all files automatically
+            const versions = ['kjv', 'niv', 'esv', 'nasb', 'nlt'];
+            let successCount = 0;
+            
+            for (const version of versions) {
+                const success = await testFile(version);
+                if (success) successCount++;
+            }
+            
+            fileInfo.innerHTML = `✅ ${successCount} of ${versions.length} Bible versions loaded successfully`;
             updateVersionDropdown();
             
-            // Auto-test files after a short delay
-            setTimeout(testAllFiles, 1000);
+            // Auto-run comparison with KJV if it loaded
+            if (loadedBibleTexts.kjv) {
+                bibleVersionSelect.value = 'kjv';
+                compareTexts();
+            }
         });
     </script>
 </body>
