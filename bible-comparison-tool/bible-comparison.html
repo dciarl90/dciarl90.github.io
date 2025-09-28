@@ -333,7 +333,7 @@
             
             const commonWords = uniqueWords1.filter(word => uniqueWords2.includes(word));
             
-            const percentage = uniqueWords1.length > 0 ? (commonWords.length / uniqueWords1.length) * 100 : 0;
+            const percentage = uniqueWords2.length > 0 ? (commonWords.length / uniqueWords2.length) * 100 : 0;
             
             return {
                 uniqueWords1: uniqueWords1.length,
