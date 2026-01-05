@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sunday Morning Coffee Tour - Feedback</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: rgb(5, 42, 41);
+            color: rgb(177, 201, 195);
+            line-height: 1.6;
+        }
+        
+        h1 {
+            color: rgb(177, 201, 195);
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: rgb(150, 180, 175);
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+        
+        .intro {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-left: 4px solid rgb(177, 201, 195);
+        }
+        
+        .intro h2 {
+            color: rgb(177, 201, 195);
+            margin-top: 0;
+        }
+        
+        .feedback-form {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: rgb(177, 201, 195);
+            font-weight: bold;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid rgb(50, 80, 75);
+            border-radius: 4px;
+            background-color: rgb(10, 50, 48);
+            color: rgb(177, 201, 195);
+            font-size: 16px;
+            resize: vertical;
+            min-height: 150px;
+            box-sizing: border-box;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: rgb(177, 201, 195);
+        }
+        
+        .submit-btn {
+            background-color: rgb(50, 80, 75);
+            color: rgb(177, 201, 195);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .submit-btn:hover {
+            background-color: rgb(70, 100, 95);
+        }
+        
+        .submit-btn:active {
+            background-color: rgb(30, 60, 55);
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: rgb(120, 150, 145);
+            font-size: 0.9em;
+            border-top: 1px solid rgb(30, 60, 55);
+            padding-top: 20px;
+        }
+        
+        .success-message {
+            display: none;
+            background-color: rgba(30, 80, 60, 0.3);
+            border: 1px solid rgb(50, 120, 90);
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: center;
+            color: rgb(150, 220, 180);
+        }
+        
+        .coffee-icon {
+            display: block;
+            margin: 0 auto 20px;
+            width: 60px;
+            height: 60px;
+            background-color: rgb(177, 201, 195);
+            border-radius: 50%;
+            position: relative;
+        }
+        
+        .coffee-icon:before {
+            content: "☕";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 30px;
+            color: rgb(5, 42, 41);
+        }
+        
+        @media (max-width: 600px) {
+            body {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .feedback-form {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="coffee-icon"></div>
+    <h1>SUNDAY MORNING COFFEE TOUR</h1>
+    <div class="subtitle">Share Your Coffee Experience</div>
+    
+    <div class="intro">
+        <h2>About This Page</h2>
+        <p>Welcome to the Sunday Morning Coffee Tour feedback page! This webpage is designed for coffee enthusiasts who have joined our Sunday morning tours or have suggestions for future visits.</p>
+        <p>Each Sunday, we explore a different coffee spot in Salt Lake City, arriving at 9:00 AM by bike (weather permitting). We're always looking for new locations to try and value your feedback on places we've visited.</p>
+        <p>Use the form below to share your thoughts, suggest a new coffee shop, or tell us about your experience on one of our tours. Your input helps us plan better coffee adventures!</p>
+    </div>
+    
+    <div class="feedback-form">
+        <h2>Share Your Feedback</h2>
+        <form id="feedbackForm">
+            <div class="form-group">
+                <label for="feedback">Your Coffee Tour Feedback or Suggestion:</label>
+                <textarea id="feedback" name="feedback" placeholder="Tell us about your experience, suggest a coffee shop, or share what you love about our Sunday tours..." required></textarea>
+            </div>
+            
+            <button type="submit" class="submit-btn">Submit Feedback</button>
+            
+            <div id="successMessage" class="success-message">
+                Thank you! Your feedback has been successfully submitted. We appreciate you helping us improve the Sunday Morning Coffee Tour experience.
+            </div>
+        </form>
+    </div>
+    
+    <div class="footer">
+        <p>Sunday Morning Coffee Tour &copy; <span id="currentYear"></span></p>
+        <p>Join us Sundays at 9:00 AM at different SLC coffee spots</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set current year in footer
+            document.getElementById('currentYear').textContent = new Date().getFullYear();
+            
+            // Handle form submission
+            const feedbackForm = document.getElementById('feedbackForm');
+            const successMessage = document.getElementById('successMessage');
+            const feedbackTextarea = document.getElementById('feedback');
+            
+            feedbackForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                
+                // In a real application, you would send the data to a server here
+                // For this example, we'll just show the success message
+                
+                // Show success message
+                successMessage.style.display = 'block';
+                
+                // Clear the form
+                feedbackTextarea.value = '';
+                
+                // Scroll to the success message
+                successMessage.scrollIntoView({ behavior: 'smooth' });
+                
+                // Hide success message after 5 seconds
+                setTimeout(function() {
+                    successMessage.style.display = 'none';
+                }, 5000);
+            });
+            
+            // Add some example placeholder text for inspiration
+            const placeholders = [
+                "Tell us about your experience, suggest a coffee shop, or share what you love about our Sunday tours...",
+                "Which coffee shop should we visit next? Tell us why!",
+                "What did you enjoy most about the last coffee tour you joined?",
+                "Any suggestions for improving our Sunday morning coffee adventures?"
+            ];
+            
+            let placeholderIndex = 0;
+            
+            // Cycle through placeholders every 10 seconds (optional feature)
+            setInterval(function() {
+                placeholderIndex = (placeholderIndex + 1) % placeholders.length;
+                feedbackTextarea.placeholder = placeholders[placeholderIndex];
+            }, 10000);
+        });
+    </script>
+</body>
+</html>
