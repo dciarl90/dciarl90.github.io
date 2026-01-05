@@ -76,7 +76,18 @@
             box-sizing: border-box;
         }
         
-        textarea:focus {
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid rgb(50, 80, 75);
+            border-radius: 4px;
+            background-color: rgb(10, 50, 48);
+            color: rgb(177, 201, 195);
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        textarea:focus, input[type="password"]:focus {
             outline: none;
             border-color: rgb(177, 201, 195);
         }
@@ -139,6 +150,17 @@
             margin-top: 20px;
             text-align: center;
             color: rgb(150, 220, 180);
+        }
+        
+        .error-message {
+            display: none;
+            background-color: rgba(120, 40, 40, 0.3);
+            border: 1px solid rgb(150, 60, 60);
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: center;
+            color: rgb(220, 150, 150);
         }
         
         .admin-panel {
@@ -221,6 +243,21 @@
             color: rgb(5, 42, 41);
         }
         
+        .password-prompt {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 25px;
+            margin-top: 30px;
+            border: 2px solid rgb(80, 50, 50);
+            text-align: center;
+        }
+        
+        .password-prompt h2 {
+            color: rgb(177, 201, 195);
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+        
         @media (max-width: 600px) {
             body {
                 padding: 15px;
@@ -244,21 +281,21 @@
     </style>
 </head>
 <body>
-    <div class="coffee-icon"></div>
+    <!-- <div class="coffee-icon"></div> -->
     <h1>SUNDAY MORNING COFFEE TOUR</h1>
     
     <div class="intro">
         <h2>Welcome</h2>
-        <p>Welcome to the Sunday Morning Coffee Tour suggestion page! Please submit a coffee shop that you'd like to visit as part of the 2026 summer coffe tour.</p>
+        <p>Welcome to the Sunday Morning Coffee Tour suggestion page! Please submit a coffee shop that you'd like to visit as part of the 2026 summer coffee tour.</p>
         <p>What is the coffee tour? In Spring 2026, I will publish the tour list of SLC coffee shops and which Sunday I'll be there. Each Sunday, I'll bike to a different coffee shop in Salt Lake City, arriving at 9:30AM (weather permitting). I hope you'll join me!.</p>
-        <p>Why is the coffee tour? I am seeking our the best coffee in SLC and I think it'd be fun to do with friends.</p>
+        <p>Why is the coffee tour? I am seeking out the best coffee in SLC and I think it'd be fun to do with friends.</p>
     </div>
     
-    <div class="Suggestion-form">
+    <div class="suggestion-form">
         <h2>Suggest a Coffee Shop</h2>
-        <form id="suggestionkForm">
+        <form id="suggestionForm">
             <div class="form-group">
-                <textarea id="Suggestion" name="Suggestion" placeholder="Your suggestion here" required></textarea>
+                <textarea id="suggestion" name="suggestion" placeholder="Your suggestion here" required></textarea>
             </div>
             
             <button type="submit" class="submit-btn">Submit Suggestion</button>
@@ -269,7 +306,21 @@
         </form>
     </div>
     
-    <!-- Admin Panel (Hidden by default, shown with URL parameter) -->
+    <!-- Password Prompt (Shown when trying to access admin panel) -->
+    <div class="password-prompt" id="passwordPrompt" style="display: none;">
+        <h2>🔐 Admin Access Required</h2>
+        <p>Please enter the admin password to access the admin panel:</p>
+        <div class="form-group">
+            <input type="password" id="adminPassword" placeholder="Enter admin password">
+        </div>
+        <button id="submitPasswordBtn" class="submit-btn">Access Admin Panel</button>
+        <button id="cancelPasswordBtn" class="submit-btn clear-btn">Cancel</button>
+        <div id="passwordError" class="error-message">
+            <strong>Error!</strong> Incorrect password. Please try again.
+        </div>
+    </div>
+    
+    <!-- Admin Panel (Hidden by default, shown after password verification) -->
     <div class="admin-panel" id="adminPanel" style="display: none;">
         <h2>📊 Admin Panel - Suggestion Submissions</h2>
         
@@ -281,7 +332,7 @@
             <button id="refreshBtn" class="submit-btn">🔄 Refresh Submissions</button>
             <button id="exportBtn" class="submit-btn export-btn">📥 Export to JSON</button>
             <button id="clearBtn" class="submit-btn clear-btn">🗑️ Clear All Submissions</button>
-            <button id="toggleAdminBtn" class="submit-btn" style="background-color: rgb(70, 50, 90);">👁️ Hide Admin Panel</button>
+            <button id="logoutBtn" class="submit-btn" style="background-color: rgb(70, 50, 90);">🔒 Logout Admin</button>
         </div>
         
         <div id="submissionsContainer">
@@ -293,7 +344,7 @@
         <p>Sunday Morning Coffee Tour &copy; <span id="currentYear"></span></p>
         <p>Join us Sundays at 9:00 AM at different SLC coffee spots</p>
         <p style="margin-top: 10px; font-size: 0.8em;">
-            <a href="?admin=true" style="color: rgb(150, 180, 175); text-decoration: none;">Admin Access</a> | 
+            <a href="#" id="adminAccessLink" style="color: rgb(150, 180, 175); text-decoration: none;">Admin Access</a> | 
             <a href="?" style="color: rgb(150, 180, 175); text-decoration: none;">User View</a>
         </p>
     </div>
@@ -301,23 +352,33 @@
     <script>
         // Initialize variables
         const STORAGE_KEY = 'coffeeTourSubmissions';
+        const ADMIN_PASSWORD = 'coffee2026'; // Default password - CHANGE THIS!
+        const ADMIN_SESSION_KEY = 'adminLoggedIn';
         
         document.addEventListener('DOMContentLoaded', function() {
             // Set current year in footer
             document.getElementById('currentYear').textContent = new Date().getFullYear();
             
-            // Check if admin panel should be shown
-            const urlParams = new URLSearchParams(window.location.search);
-            const showAdmin = urlParams.get('admin') === 'true';
+            // Check if admin is already logged in from session
+            const isAdminLoggedIn = sessionStorage.getItem(ADMIN_SESSION_KEY) === 'true';
             
-            if (showAdmin) {
+            // Check URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const showAdminParam = urlParams.get('admin');
+            
+            if (showAdminParam === 'true') {
+                // If admin parameter is in URL, show password prompt
+                showPasswordPrompt();
+            } else if (isAdminLoggedIn) {
+                // If already logged in from session, show admin panel
                 showAdminPanel();
+                loadSubmissions();
             }
             
             // Handle form submission
-            const suggestionForm = document.getElementById('suggestionkForm');
+            const suggestionForm = document.getElementById('suggestionForm');
             const successMessage = document.getElementById('successMessage');
-            const suggestionTextarea = document.getElementById('Suggestion');
+            const suggestionTextarea = document.getElementById('suggestion');
             
             suggestionForm.addEventListener('submit', function(event) {
                 event.preventDefault();
@@ -346,8 +407,31 @@
                 }, 5000);
                 
                 // Refresh admin panel if it's visible
-                if (showAdmin) {
+                if (document.getElementById('adminPanel').style.display === 'block') {
                     loadSubmissions();
+                }
+            });
+            
+            // Admin access link handler
+            document.getElementById('adminAccessLink').addEventListener('click', function(event) {
+                event.preventDefault();
+                showPasswordPrompt();
+            });
+            
+            // Password prompt handlers
+            document.getElementById('submitPasswordBtn').addEventListener('click', verifyPassword);
+            
+            document.getElementById('cancelPasswordBtn').addEventListener('click', function() {
+                hidePasswordPrompt();
+                // Clear URL parameters
+                window.history.replaceState({}, document.title, window.location.pathname);
+            });
+            
+            // Password field enter key support
+            document.getElementById('adminPassword').addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    verifyPassword();
                 }
             });
             
@@ -362,14 +446,9 @@
                 }
             });
             
-            document.getElementById('toggleAdminBtn').addEventListener('click', function() {
-                hideAdminPanel();
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                logoutAdmin();
             });
-            
-            // Load submissions if admin panel is visible
-            if (showAdmin) {
-                loadSubmissions();
-            }
         });
         
         // Save submission to localStorage
@@ -494,16 +573,50 @@
             `;
         }
         
+        // Show password prompt
+        function showPasswordPrompt() {
+            document.getElementById('passwordPrompt').style.display = 'block';
+            document.getElementById('adminPassword').focus();
+            // Update URL
+            window.history.pushState({}, '', '?admin=true');
+        }
+        
+        // Hide password prompt
+        function hidePasswordPrompt() {
+            document.getElementById('passwordPrompt').style.display = 'none';
+            document.getElementById('adminPassword').value = '';
+            document.getElementById('passwordError').style.display = 'none';
+        }
+        
+        // Verify password
+        function verifyPassword() {
+            const passwordInput = document.getElementById('adminPassword');
+            const passwordError = document.getElementById('passwordError');
+            
+            if (passwordInput.value === ADMIN_PASSWORD) {
+                // Password correct
+                hidePasswordPrompt();
+                sessionStorage.setItem(ADMIN_SESSION_KEY, 'true');
+                showAdminPanel();
+                loadSubmissions();
+            } else {
+                // Password incorrect
+                passwordError.style.display = 'block';
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        }
+        
         // Show admin panel
         function showAdminPanel() {
             document.getElementById('adminPanel').style.display = 'block';
-            document.getElementById('toggleAdminBtn').textContent = '👁️ Hide Admin Panel';
         }
         
-        // Hide admin panel
-        function hideAdminPanel() {
+        // Logout admin
+        function logoutAdmin() {
+            sessionStorage.removeItem(ADMIN_SESSION_KEY);
             document.getElementById('adminPanel').style.display = 'none';
-            // Remove admin parameter from URL
+            // Clear URL parameters
             window.history.replaceState({}, document.title, window.location.pathname);
         }
         
@@ -528,13 +641,29 @@
         document.addEventListener('keydown', function(e) {
             if (e.ctrlKey && e.shiftKey && e.key === 'A') {
                 e.preventDefault();
-                if (document.getElementById('adminPanel').style.display === 'none') {
-                    showAdminPanel();
-                    loadSubmissions();
-                    // Update URL without reloading
-                    window.history.pushState({}, '', '?admin=true');
+                if (sessionStorage.getItem(ADMIN_SESSION_KEY) === 'true') {
+                    // Already logged in, toggle admin panel
+                    if (document.getElementById('adminPanel').style.display === 'none') {
+                        showAdminPanel();
+                        loadSubmissions();
+                        window.history.pushState({}, '', '?admin=true');
+                    } else {
+                        document.getElementById('adminPanel').style.display = 'none';
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }
                 } else {
-                    hideAdminPanel();
+                    // Not logged in, show password prompt
+                    showPasswordPrompt();
+                }
+            }
+            
+            // Escape key to close admin panel or password prompt
+            if (e.key === 'Escape') {
+                if (document.getElementById('passwordPrompt').style.display === 'block') {
+                    hidePasswordPrompt();
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                } else if (document.getElementById('adminPanel').style.display === 'block') {
+                    document.getElementById('adminPanel').style.display = 'none';
                 }
             }
         });
