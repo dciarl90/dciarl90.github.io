@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sunday Morning Coffee Tour - Feedback</title>
+    <title>Sunday Morning Coffee Tour - Suggestions</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -44,7 +44,7 @@
             margin-top: 0;
         }
         
-        .feedback-form {
+        .suggestion-form {
             background-color: rgba(0, 0, 0, 0.2);
             border-radius: 8px;
             padding: 25px;
@@ -230,7 +230,7 @@
                 font-size: 2em;
             }
             
-            .feedback-form, .admin-panel {
+            .suggestion-form, .admin-panel {
                 padding: 15px;
             }
             
@@ -250,30 +250,28 @@
     
     <div class="intro">
         <h2>About This Page</h2>
-        <p>Welcome to the Sunday Morning Coffee Tour feedback page! This webpage is designed for coffee enthusiasts who have joined our Sunday morning tours or have suggestions for future visits.</p>
-        <p>Each Sunday, we explore a different coffee spot in Salt Lake City, arriving at 9:00 AM by bike (weather permitting). We're always looking for new locations to try and value your feedback on places we've visited.</p>
-        <p>Use the form below to share your thoughts, suggest a new coffee shop, or tell us about your experience on one of our tours. Your input helps us plan better coffee adventures!</p>
+        <p>Welcome to the Sunday Morning Coffee Tour suggestion page! Please submit a coffee shop that you'd like to visit as part of the 2026 summer coffe tour.</p>
+        <p>What's this coffee tour? Each Sunday, I'll bike to a different coffee shop in Salt Lake City, arriving at 9:30 AM (weather permitting). Everyone is welcome to join me.</p>
     </div>
     
-    <div class="feedback-form">
-        <h2>Share Your Feedback</h2>
-        <form id="feedbackForm">
+    <div class="Suggestion-form">
+        <h2>Suggest a Coffee Shop</h2>
+        <form id="suggestionkForm">
             <div class="form-group">
-                <label for="feedback">Your Coffee Tour Feedback or Suggestion:</label>
-                <textarea id="feedback" name="feedback" placeholder="Tell us about your experience, suggest a coffee shop, or share what you love about our Sunday tours..." required></textarea>
+                <textarea id="Suggestion" name="Suggestion" placeholder="Your suggestion here" required></textarea>
             </div>
             
-            <button type="submit" class="submit-btn">Submit Feedback</button>
+            <button type="submit" class="submit-btn">Submit Suggestion</button>
             
             <div id="successMessage" class="success-message">
-                <strong>Success!</strong> Thank you! Your feedback has been successfully submitted. We appreciate you helping us improve the Sunday Morning Coffee Tour experience.
+                <strong>Success!</strong> Thank you! Your suggestion has been successfully submitted.
             </div>
         </form>
     </div>
     
     <!-- Admin Panel (Hidden by default, shown with URL parameter) -->
     <div class="admin-panel" id="adminPanel" style="display: none;">
-        <h2>📊 Admin Panel - Feedback Submissions</h2>
+        <h2>📊 Admin Panel - Suggestion Submissions</h2>
         
         <div class="stats" id="submissionStats">
             <!-- Stats will be populated by JavaScript -->
@@ -317,27 +315,27 @@
             }
             
             // Handle form submission
-            const feedbackForm = document.getElementById('feedbackForm');
+            const suggestionForm = document.getElementById('suggestionkForm');
             const successMessage = document.getElementById('successMessage');
-            const feedbackTextarea = document.getElementById('feedback');
+            const suggestionTextarea = document.getElementById('Suggestion');
             
-            feedbackForm.addEventListener('submit', function(event) {
+            suggestionForm.addEventListener('submit', function(event) {
                 event.preventDefault();
                 
-                if (!feedbackTextarea.value.trim()) {
-                    alert("Please enter some feedback before submitting.");
-                    feedbackTextarea.focus();
+                if (!suggestionTextarea.value.trim()) {
+                    alert("Please enter a suggestion before submitting.");
+                    suggestionTextarea.focus();
                     return;
                 }
                 
                 // Save submission to localStorage
-                saveSubmission(feedbackTextarea.value.trim());
+                saveSubmission(suggestionTextarea.value.trim());
                 
                 // Show success message
                 successMessage.style.display = 'block';
                 
                 // Clear the form
-                feedbackTextarea.value = '';
+                suggestionTextarea.value = '';
                 
                 // Scroll to success message
                 successMessage.scrollIntoView({ behavior: 'smooth' });
@@ -375,14 +373,14 @@
         });
         
         // Save submission to localStorage
-        function saveSubmission(feedback) {
+        function saveSubmission(suggestion) {
             // Get existing submissions or create empty array
             let submissions = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
             
             // Create submission object
             const submission = {
                 id: Date.now(), // Unique ID based on timestamp
-                text: feedback,
+                text: suggestion,
                 date: new Date().toLocaleString('en-US', {
                     year: 'numeric',
                     month: 'short',
@@ -425,7 +423,7 @@
             if (submissions.length === 0) {
                 container.innerHTML = `
                     <div class="no-submissions">
-                        <p>No submissions yet. Submit feedback using the form above.</p>
+                        <p>No submissions yet. Submit suggestions using the form above.</p>
                     </div>
                 `;
                 return;
