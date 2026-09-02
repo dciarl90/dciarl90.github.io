@@ -44,7 +44,7 @@
         }
         
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         
         label {
@@ -54,15 +54,16 @@
             color: #333;
         }
         
-        input {
+        select, input {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             border: 2px solid #ddd;
             border-radius: 8px;
             font-size: 16px;
+            background: white;
         }
         
-        input:focus {
+        select:focus, input:focus {
             outline: none;
             border-color: #1a1a2e;
         }
@@ -144,13 +145,6 @@
             display: block;
         }
         
-        .data-info {
-            text-align: center;
-            font-size: 12px;
-            color: #999;
-            margin-top: 15px;
-        }
-        
         .status-bar {
             background: #f0f0f0;
             padding: 8px;
@@ -171,23 +165,11 @@
             color: #c62828;
         }
         
-        .debug-box {
-            background: #1a1a2e;
-            color: #0f0;
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 10px;
-            font-size: 11px;
-            font-family: monospace;
-            max-height: 200px;
-            overflow-y: auto;
-            display: none;
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
-        
-        .debug-box.show {
-            display: block;
+        .data-info {
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            margin-top: 15px;
         }
     </style>
 </head>
@@ -201,60 +183,81 @@
         <form id="calcForm">
             <div class="row">
                 <div class="form-group">
-                    <label>Month (1-12)</label>
-                    <input type="number" id="month" min="1" max="12" required>
+                    <label>Month</label>
+                    <select id="month">
+                        <option value="1">January</option>
+                        <option value="2">February</option>
+                        <option value="3">March</option>
+                        <option value="4">April</option>
+                        <option value="5">May</option>
+                        <option value="6">June</option>
+                        <option value="7">July</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
                 </div>
                 <div class="form-group">
-                    <label>Day (1-31)</label>
-                    <input type="number" id="day" min="1" max="31" required>
+                    <label>Day</label>
+                    <select id="day">
+                        <!-- Will be populated by JavaScript -->
+                    </select>
                 </div>
             </div>
             
-            <div class="row">
-                <div class="form-group">
-                    <label>Start Year</label>
-                    <input type="number" id="startYear" min="1900" max="2100" required>
-                </div>
-                <div class="form-group">
-                    <label>End Year</label>
-                    <input type="number" id="endYear" min="1900" max="2100" required>
-                </div>
-            </div>
-            
-            <button type="submit" id="calcBtn" disabled>Calculate</button>
+            <button type="submit" id="calcBtn" disabled>Find Full Moons</button>
         </form>
         
         <div id="error" class="error"></div>
         
         <div id="results" class="results" style="display:none;">
-            <h2>Results: <span id="resultCount">0</span> years</h2>
+            <h2>Full Moons on <span id="displayDate"></span></h2>
             <div id="yearList"></div>
         </div>
         
         <div class="data-info">
-            Data covers years 1900-2100
+            Data covers years 1900-2200
         </div>
-        
-        <button id="debugBtn" style="margin-top: 10px; padding: 8px; font-size: 12px; background: #666;">Show Debug</button>
-        <div id="debugBox" class="debug-box"></div>
     </div>
 
     <script>
         let moonData = {};
         let dataLoaded = false;
-        let debugMessages = [];
         
-        function debug(msg) {
-            console.log(msg);
-            debugMessages.push(msg);
-            const debugBox = document.getElementById('debugBox');
-            debugBox.textContent = debugMessages.join('\n');
+        // Populate days dropdown
+        function populateDays(month) {
+            const daySelect = document.getElementById('day');
+            daySelect.innerHTML = '';
+            
+            // Get days in month
+            let daysInMonth;
+            if (month === 2) {
+                daysInMonth = 29; // February (we'll handle invalid dates)
+            } else if ([4, 6, 9, 11].includes(month)) {
+                daysInMonth = 30;
+            } else {
+                daysInMonth = 31;
+            }
+            
+            for (let i = 1; i <= daysInMonth; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = i;
+                daySelect.appendChild(option);
+            }
         }
         
-        document.getElementById('debugBtn').addEventListener('click', function() {
-            const box = document.getElementById('debugBox');
-            box.classList.toggle('show');
-            this.textContent = box.classList.contains('show') ? 'Hide Debug' : 'Show Debug';
+        // Initialize with current month
+        const today = new Date();
+        const currentMonth = today.getMonth() + 1;
+        document.getElementById('month').value = currentMonth;
+        populateDays(currentMonth);
+        
+        // Update days when month changes
+        document.getElementById('month').addEventListener('change', function() {
+            populateDays(parseInt(this.value));
         });
         
         // Load the CSV data
@@ -266,7 +269,6 @@
                 statusBar.textContent = 'Loading moon data...';
                 statusBar.className = 'status-bar';
                 
-                debug('Fetching full_moon_years.csv...');
                 const response = await fetch('full_moon_years.csv');
                 
                 if (!response.ok) {
@@ -274,85 +276,52 @@
                 }
                 
                 const csvText = await response.text();
-                debug(`CSV loaded: ${csvText.length} characters`);
-                debug(`First 300 chars:\n${csvText.substring(0, 300)}`);
                 
-                // Try different parsing methods
+                // Parse CSV
                 const lines = csvText.split('\n');
-                debug(`Found ${lines.length} lines`);
-                
                 let loadedCount = 0;
-                let skippedHeader = false;
+                let isHeader = true;
                 
                 for (let i = 0; i < lines.length; i++) {
                     const line = lines[i].trim();
                     if (line === '') continue;
                     
-                    // Try to detect and skip header
-                    if (!skippedHeader && (line.includes('month') || line.includes('Month'))) {
-                        debug(`Skipping header line ${i}: ${line}`);
-                        skippedHeader = true;
+                    // Skip header
+                    if (isHeader && (line.includes('month') || line.includes('Month'))) {
+                        isHeader = false;
                         continue;
                     }
+                    isHeader = false;
                     
-                    // If we haven't found a header yet but this looks like data, treat it as data
-                    // Try to parse the line
-                    let parts = [];
-                    
-                    // Try tab first
+                    // Split by tab or multiple spaces
+                    let parts;
                     if (line.includes('\t')) {
                         parts = line.split('\t');
-                    } 
-                    // Try comma
-                    else if (line.includes(',')) {
-                        parts = line.split(',');
-                    } 
-                    // Try multiple spaces
-                    else {
+                    } else {
                         parts = line.split(/\s+/);
                     }
                     
                     // Remove empty parts
                     parts = parts.filter(p => p !== '');
                     
-                    if (parts.length < 3) {
-                        debug(`Line ${i}: Not enough parts (${parts.length}) - skipping`);
-                        continue;
-                    }
+                    if (parts.length < 3) continue;
                     
                     const month = parseInt(parts[0]);
                     const day = parseInt(parts[1]);
                     
-                    if (isNaN(month) || isNaN(day)) {
-                        debug(`Line ${i}: Invalid month/day - ${parts[0]}, ${parts[1]}`);
-                        continue;
-                    }
+                    if (isNaN(month) || isNaN(day)) continue;
                     
-                    // Combine remaining parts as the years array
+                    // Get the years part (everything after month and day)
                     let yearsStr = parts.slice(2).join(' ');
-                    
-                    // Remove any quotes
-                    yearsStr = yearsStr.replace(/["']/g, '');
                     
                     try {
                         // Parse the array
                         const years = JSON.parse(yearsStr);
-                        
-                        // Verify it's an array
-                        if (!Array.isArray(years)) {
-                            debug(`Line ${i}: Not an array - ${typeof years}`);
-                            continue;
-                        }
-                        
                         const key = `${month}-${day}`;
                         moonData[key] = years;
                         loadedCount++;
-                        
-                        if (loadedCount <= 10) {
-                            debug(`Loaded: ${month}/${day} -> ${years.length} years`);
-                        }
                     } catch (e) {
-                        debug(`Line ${i}: Failed to parse: ${yearsStr.substring(0, 50)}...`);
+                        // Skip invalid entries
                         continue;
                     }
                 }
@@ -362,26 +331,11 @@
                 statusBar.className = 'status-bar loaded';
                 calcBtn.disabled = false;
                 
-                debug(`\n✅ Total loaded: ${Object.keys(moonData).length} dates`);
-                debug(`Sample keys: ${Object.keys(moonData).slice(0, 10).join(', ')}`);
-                
-                // Check specifically for 9/2
-                if (moonData['9-2']) {
-                    debug(`✅ Found 9/2 with ${moonData['9-2'].length} years`);
-                } else {
-                    debug(`❌ 9/2 not found in data`);
-                    // Show what keys we have
-                    const keys = Object.keys(moonData);
-                    const sepKeys = keys.filter(k => k.startsWith('9-'));
-                    debug(`September keys: ${sepKeys.join(', ')}`);
-                }
-                
             } catch (error) {
                 console.error('Error loading data:', error);
                 statusBar.textContent = '❌ Failed to load moon data. Please refresh the page.';
                 statusBar.className = 'status-bar error';
                 calcBtn.disabled = true;
-                debug(`ERROR: ${error.message}`);
                 showError('Failed to load moon data. Make sure full_moon_years.csv is in the same folder.');
             }
         }
@@ -399,69 +353,46 @@
             
             const month = parseInt(document.getElementById('month').value);
             const day = parseInt(document.getElementById('day').value);
-            const startYear = parseInt(document.getElementById('startYear').value);
-            const endYear = parseInt(document.getElementById('endYear').value);
             
             const errorDiv = document.getElementById('error');
             errorDiv.classList.remove('show');
             
-            // Validate
-            if (month < 1 || month > 12) {
-                showError('Month must be between 1 and 12');
-                return;
-            }
-            if (day < 1 || day > 31) {
-                showError('Day must be between 1 and 31');
-                return;
-            }
-            if (startYear > endYear) {
-                showError('Start year must be before end year');
-                return;
-            }
-            if (startYear < 1900 || endYear > 2100) {
-                showError('Years must be between 1900 and 2100');
-                return;
-            }
-            
             // Check if date is valid
             const testDate = new Date(2000, month - 1, day);
             if (testDate.getMonth() !== month - 1) {
-                showError('Invalid date (e.g., Feb 31)');
+                showError('Invalid date');
                 return;
             }
             
             // Look up the data
             const key = `${month}-${day}`;
-            debug(`Looking up: ${key}`);
+            const years = moonData[key];
             
-            const allYears = moonData[key];
-            
-            if (!allYears) {
-                debug(`❌ No data found for ${key}`);
-                showError(`No data found for date ${month}/${day}`);
+            if (!years) {
+                showError(`No data found for ${month}/${day}`);
                 return;
             }
             
-            debug(`✅ Found ${allYears.length} years for ${month}/${day}`);
-            
-            // Filter by year range
-            const filteredYears = allYears.filter(year => year >= startYear && year <= endYear);
-            
             // Display results
-            displayResults(filteredYears);
+            displayResults(month, day, years);
         });
         
-        function displayResults(results) {
+        function displayResults(month, day, years) {
             const resultsDiv = document.getElementById('results');
             const yearList = document.getElementById('yearList');
-            document.getElementById('resultCount').textContent = results.length;
+            const displayDate = document.getElementById('displayDate');
+            
+            // Format date
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                               'July', 'August', 'September', 'October', 'November', 'December'];
+            displayDate.textContent = `${monthNames[month-1]} ${day}`;
             
             resultsDiv.style.display = 'block';
             
-            if (results.length === 0) {
-                yearList.innerHTML = '<div class="no-results">No full moons found on this date in the specified range</div>';
+            if (years.length === 0) {
+                yearList.innerHTML = '<div class="no-results">No full moons found on this date</div>';
             } else {
-                yearList.innerHTML = results.map(year => 
+                yearList.innerHTML = years.map(year => 
                     `<span class="year-tag">${year}</span>`
                 ).join('');
             }
@@ -473,13 +404,6 @@
             errorDiv.classList.add('show');
             document.getElementById('results').style.display = 'none';
         }
-        
-        // Set default values
-        const today = new Date();
-        document.getElementById('month').value = today.getMonth() + 1;
-        document.getElementById('day').value = today.getDate();
-        document.getElementById('startYear').value = 2000;
-        document.getElementById('endYear').value = 2050;
     </script>
 </body>
 </html>
