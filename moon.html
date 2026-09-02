@@ -144,12 +144,6 @@
             display: block;
         }
         
-        .loading {
-            text-align: center;
-            color: #666;
-            padding: 20px;
-        }
-        
         .data-info {
             text-align: center;
             font-size: 12px;
@@ -175,23 +169,6 @@
         .status-bar.error {
             background: #ffebee;
             color: #c62828;
-        }
-        
-        .debug {
-            background: #f5f5f5;
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 10px;
-            font-size: 11px;
-            color: #666;
-            max-height: 100px;
-            overflow-y: auto;
-            font-family: monospace;
-            display: none;
-        }
-        
-        .debug.show {
-            display: block;
         }
     </style>
 </head>
@@ -238,22 +215,11 @@
         <div class="data-info">
             Data covers years 1900-2100
         </div>
-        
-        <div id="debug" class="debug"></div>
     </div>
 
     <script>
         let moonData = {};
         let dataLoaded = false;
-        let debugLines = [];
-        
-        function debugLog(message) {
-            console.log(message);
-            debugLines.push(message);
-            const debugDiv = document.getElementById('debug');
-            debugDiv.textContent = debugLines.join('\n');
-            debugDiv.className = 'debug show';
-        }
         
         // Load the CSV data
         async function loadData() {
@@ -264,7 +230,6 @@
                 statusBar.textContent = 'Loading moon data...';
                 statusBar.className = 'status-bar';
                 
-                debugLog('Fetching full_moon_years.csv...');
                 const response = await fetch('full_moon_years.csv');
                 
                 if (!response.ok) {
@@ -272,58 +237,67 @@
                 }
                 
                 const csvText = await response.text();
-                debugLog(`CSV loaded, length: ${csvText.length} characters`);
-                debugLog(`First 100 chars: ${csvText.substring(0, 100)}`);
+                console.log('CSV loaded, length:', csvText.length);
                 
-                // Parse CSV
+                // Parse CSV - handles both comma and tab separated
                 const lines = csvText.split('\n');
-                debugLog(`Found ${lines.length} lines`);
-                
                 let loadedCount = 0;
-                let headerSkipped = false;
                 
                 for (let i = 0; i < lines.length; i++) {
                     const line = lines[i].trim();
                     if (line === '') continue;
                     
                     // Skip header
-                    if (!headerSkipped) {
-                        if (line.toLowerCase().includes('month')) {
-                            headerSkipped = true;
-                            debugLog(`Skipped header: ${line}`);
-                            continue;
-                        }
-                        headerSkipped = true;
-                    }
-                    
-                    // Parse the line: month,day,"[years]"
-                    const parts = line.match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g);
-                    if (!parts || parts.length < 3) {
-                        debugLog(`Skipping line ${i}: not enough parts`);
+                    if (i === 0 && (line.includes('month') || line.includes('Month'))) {
+                        console.log('Skipped header:', line);
                         continue;
                     }
                     
-                    const month = parseInt(parts[0].trim());
-                    const day = parseInt(parts[1].trim());
-                    
-                    let yearsStr = parts[2].trim();
-                    // Remove quotes if present
-                    if (yearsStr.startsWith('"') && yearsStr.endsWith('"')) {
-                        yearsStr = yearsStr.slice(1, -1);
+                    // Split by tabs or commas or multiple spaces
+                    let parts;
+                    if (line.includes('\t')) {
+                        parts = line.split('\t');
+                    } else if (line.includes(',')) {
+                        parts = line.split(',');
+                    } else {
+                        // Split by multiple spaces
+                        parts = line.split(/\s+/);
                     }
                     
+                    // Remove empty parts
+                    parts = parts.filter(p => p !== '');
+                    
+                    if (parts.length < 3) {
+                        console.log(`Skipping line ${i}: not enough parts`, parts);
+                        continue;
+                    }
+                    
+                    const month = parseInt(parts[0]);
+                    const day = parseInt(parts[1]);
+                    
+                    if (isNaN(month) || isNaN(day)) {
+                        console.log(`Skipping line ${i}: invalid month/day`);
+                        continue;
+                    }
+                    
+                    // Get the years part - it might be multiple parts if there are spaces
+                    let yearsStr = parts.slice(2).join(' ');
+                    
+                    // Remove any quotes
+                    yearsStr = yearsStr.replace(/["']/g, '');
+                    
                     try {
+                        // Parse the array
                         const years = JSON.parse(yearsStr);
                         const key = `${month}-${day}`;
                         moonData[key] = years;
                         loadedCount++;
                         
-                        // Log first few entries
                         if (loadedCount <= 5) {
-                            debugLog(`Loaded: ${month}/${day} -> ${years.length} years`);
+                            console.log(`Loaded: ${month}/${day} -> ${years.length} years`);
                         }
                     } catch (e) {
-                        debugLog(`Failed to parse line ${i}: ${yearsStr}`);
+                        console.log(`Failed to parse line ${i}:`, yearsStr);
                         continue;
                     }
                 }
@@ -333,15 +307,14 @@
                 statusBar.className = 'status-bar loaded';
                 calcBtn.disabled = false;
                 
-                debugLog(`Total loaded: ${Object.keys(moonData).length} dates`);
-                debugLog(`Sample keys: ${Object.keys(moonData).slice(0, 10).join(', ')}`);
+                console.log(`Total loaded: ${Object.keys(moonData).length} dates`);
+                console.log('Sample keys:', Object.keys(moonData).slice(0, 10));
                 
             } catch (error) {
                 console.error('Error loading data:', error);
                 statusBar.textContent = '❌ Failed to load moon data. Please refresh the page.';
                 statusBar.className = 'status-bar error';
                 calcBtn.disabled = true;
-                debugLog(`ERROR: ${error.message}`);
                 showError('Failed to load moon data. Make sure full_moon_years.csv is in the same folder.');
             }
         }
@@ -392,18 +365,16 @@
             
             // Look up the data
             const key = `${month}-${day}`;
-            debugLog(`Looking up: ${key}`);
+            console.log('Looking up:', key);
             
             const allYears = moonData[key];
             
             if (!allYears) {
-                debugLog(`No data found for ${key}`);
-                debugLog(`Available keys: ${Object.keys(moonData).slice(0, 20).join(', ')}`);
                 showError(`No data found for date ${month}/${day}`);
                 return;
             }
             
-            debugLog(`Found ${allYears.length} years for ${month}/${day}`);
+            console.log(`Found ${allYears.length} years for ${month}/${day}`);
             
             // Filter by year range
             const filteredYears = allYears.filter(year => year >= startYear && year <= endYear);
