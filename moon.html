@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Full Moon Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        
+        h1 {
+            color: #1a1a2e;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #1a1a2e;
+        }
+        
+        .row {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .row .form-group {
+            flex: 1;
+        }
+        
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #1a1a2e;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #0f3460;
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .results {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #ddd;
+        }
+        
+        .results h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+        
+        .year-tag {
+            display: inline-block;
+            background: #1a1a2e;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            margin: 5px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        
+        .year-tag:hover {
+            transform: scale(1.05);
+        }
+        
+        .no-results {
+            color: #666;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .error {
+            background: #fee;
+            color: #c00;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .error.show {
+            display: block;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+        }
+        
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+        
+        @keyframes dots {
+            0% { content: ''; }
+            25% { content: '.'; }
+            50% { content: '..'; }
+            75% { content: '...'; }
+        }
+        
+        .data-info {
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            margin-top: 15px;
+        }
+        
+        .status-bar {
+            background: #f0f0f0;
+            padding: 8px;
+            border-radius: 8px;
+            margin-top: 10px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .status-bar.loaded {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌙 Full Moon Calculator</h1>
+        <p class="subtitle">Find years when a full moon falls on a specific date</p>
+        
+        <div id="statusBar" class="status-bar">Loading data...</div>
+        
+        <form id="calcForm">
+            <div class="row">
+                <div class="form-group">
+                    <label>Month (1-12)</label>
+                    <input type="number" id="month" min="1" max="12" required>
+                </div>
+                <div class="form-group">
+                    <label>Day (1-31)</label>
+                    <input type="number" id="day" min="1" max="31" required>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="form-group">
+                    <label>Start Year</label>
+                    <input type="number" id="startYear" min="1900" max="2100" required>
+                </div>
+                <div class="form-group">
+                    <label>End Year</label>
+                    <input type="number" id="endYear" min="1900" max="2100" required>
+                </div>
+            </div>
+            
+            <button type="submit" id="calcBtn" disabled>Calculate</button>
+        </form>
+        
+        <div id="error" class="error"></div>
+        
+        <div id="results" class="results" style="display:none;">
+            <h2>Results: <span id="resultCount">0</span> years</h2>
+            <div id="yearList"></div>
+        </div>
+        
+        <div class="data-info">
+            Data covers years 1900-2100
+        </div>
+    </div>
+
+    <script>
+        let moonData = {};
+        let dataLoaded = false;
+        
+        // Load the CSV data
+        async function loadData() {
+            const statusBar = document.getElementById('statusBar');
+            const calcBtn = document.getElementById('calcBtn');
+            
+            try {
+                statusBar.textContent = 'Loading moon data...';
+                
+                const response = await fetch('full_moon_years.csv');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const csvText = await response.text();
+                
+                // Parse CSV
+                const lines = csvText.split('\n');
+                let loadedCount = 0;
+                
+                for (let i = 1; i < lines.length; i++) { // Skip header
+                    const line = lines[i].trim();
+                    if (line === '') continue;
+                    
+                    // Parse CSV line (handles quoted strings with commas)
+                    const parts = line.match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g);
+                    if (!parts || parts.length < 3) continue;
+                    
+                    const month = parseInt(parts[0]);
+                    const day = parseInt(parts[1]);
+                    
+                    // Parse the years array (e.g., "[2023, 2041, 2054]")
+                    let yearsStr = parts[2].trim();
+                    // Remove quotes if present
+                    if (yearsStr.startsWith('"') && yearsStr.endsWith('"')) {
+                        yearsStr = yearsStr.slice(1, -1);
+                    }
+                    
+                    try {
+                        const years = JSON.parse(yearsStr);
+                        const key = `${month}-${day}`;
+                        moonData[key] = years;
+                        loadedCount++;
+                    } catch (e) {
+                        // Skip invalid entries
+                        continue;
+                    }
+                }
+                
+                dataLoaded = true;
+                statusBar.textContent = `✅ Loaded data for ${loadedCount} dates`;
+                statusBar.className = 'status-bar loaded';
+                calcBtn.disabled = false;
+                
+                console.log(`Loaded data for ${Object.keys(moonData).length} dates`);
+            } catch (error) {
+                console.error('Error loading data:', error);
+                statusBar.textContent = '❌ Failed to load moon data. Please refresh the page.';
+                statusBar.style.background = '#ffebee';
+                statusBar.style.color = '#c62828';
+                calcBtn.disabled = true;
+                showError('Failed to load moon data. Make sure full_moon_years.csv is in the same folder.');
+            }
+        }
+        
+        // Load data when page loads
+        loadData();
+        
+        document.getElementById('calcForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!dataLoaded) {
+                showError('Data is still loading. Please wait...');
+                return;
+            }
+            
+            const month = parseInt(document.getElementById('month').value);
+            const day = parseInt(document.getElementById('day').value);
+            const startYear = parseInt(document.getElementById('startYear').value);
+            const endYear = parseInt(document.getElementById('endYear').value);
+            
+            const errorDiv = document.getElementById('error');
+            errorDiv.classList.remove('show');
+            
+            // Validate
+            if (month < 1 || month > 12) {
+                showError('Month must be between 1 and 12');
+                return;
+            }
+            if (day < 1 || day > 31) {
+                showError('Day must be between 1 and 31');
+                return;
+            }
+            if (startYear > endYear) {
+                showError('Start year must be before end year');
+                return;
+            }
+            if (startYear < 1900 || endYear > 2100) {
+                showError('Years must be between 1900 and 2100');
+                return;
+            }
+            
+            // Check if date is valid
+            const testDate = new Date(2000, month - 1, day);
+            if (testDate.getMonth() !== month - 1) {
+                showError('Invalid date (e.g., Feb 31)');
+                return;
+            }
+            
+            // Look up the data
+            const key = `${month}-${day}`;
+            const allYears = moonData[key];
+            
+            if (!allYears) {
+                showError('No data found for this date');
+                return;
+            }
+            
+            // Filter by year range
+            const filteredYears = allYears.filter(year => year >= startYear && year <= endYear);
+            
+            // Display results
+            displayResults(filteredYears);
+        });
+        
+        function displayResults(results) {
+            const resultsDiv = document.getElementById('results');
+            const yearList = document.getElementById('yearList');
+            document.getElementById('resultCount').textContent = results.length;
+            
+            resultsDiv.style.display = 'block';
+            
+            if (results.length === 0) {
+                yearList.innerHTML = '<div class="no-results">No full moons found on this date in the specified range</div>';
+            } else {
+                yearList.innerHTML = results.map(year => 
+                    `<span class="year-tag">${year}</span>`
+                ).join('');
+            }
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+            document.getElementById('results').style.display = 'none';
+        }
+        
+        // Set default values
+        const today = new Date();
+        document.getElementById('month').value = today.getMonth() + 1;
+        document.getElementById('day').value = today.getDate();
+        document.getElementById('startYear').value = 2000;
+        document.getElementById('endYear').value = 2050;
+    </script>
+</body>
+</html>
