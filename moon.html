@@ -171,11 +171,38 @@
             color: #999;
             margin-top: 15px;
         }
+        
+        .debug-box {
+            background: #1a1a2e;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 11px;
+            font-family: monospace;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            display: none;
+        }
+        
+        .debug-box.show {
+            display: block;
+        }
+        
+        #debugBtn {
+            margin-top: 10px;
+            padding: 8px;
+            font-size: 12px;
+            background: #666;
+            width: auto;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🌙🌙🌙🌙 Full Moon Calculator</h1>
+        <h1>🌙 Full Moon Calculator</h1>
         <p class="subtitle">Find years when a full moon falls on a specific date</p>
         
         <div id="statusBar" class="status-bar">Loading data...</div>
@@ -220,21 +247,37 @@
         <div class="data-info">
             Data covers years 1900-2200
         </div>
+        
+        <button id="debugBtn">Show Debug Info</button>
+        <div id="debugBox" class="debug-box"></div>
     </div>
 
     <script>
         let moonData = {};
         let dataLoaded = false;
+        let debugMessages = [];
+        
+        function debug(msg) {
+            console.log(msg);
+            debugMessages.push(msg);
+            const debugBox = document.getElementById('debugBox');
+            debugBox.textContent = debugMessages.join('\n');
+        }
+        
+        document.getElementById('debugBtn').addEventListener('click', function() {
+            const box = document.getElementById('debugBox');
+            box.classList.toggle('show');
+            this.textContent = box.classList.contains('show') ? 'Hide Debug Info' : 'Show Debug Info';
+        });
         
         // Populate days dropdown
         function populateDays(month) {
             const daySelect = document.getElementById('day');
             daySelect.innerHTML = '';
             
-            // Get days in month
             let daysInMonth;
             if (month === 2) {
-                daysInMonth = 29; // February (we'll handle invalid dates)
+                daysInMonth = 29;
             } else if ([4, 6, 9, 11].includes(month)) {
                 daysInMonth = 30;
             } else {
@@ -269,6 +312,9 @@
                 statusBar.textContent = 'Loading moon data...';
                 statusBar.className = 'status-bar';
                 
+                debug('=== STARTING LOAD ===');
+                debug('Fetching full_moon_years.csv...');
+                
                 const response = await fetch('full_moon_years.csv');
                 
                 if (!response.ok) {
@@ -276,10 +322,15 @@
                 }
                 
                 const csvText = await response.text();
+                debug(`CSV loaded: ${csvText.length} characters`);
+                debug(`First 500 characters:\n${csvText.substring(0, 500)}`);
                 
-                // Parse CSV
+                // Parse CSV line by line
                 const lines = csvText.split('\n');
+                debug(`Found ${lines.length} lines`);
+                
                 let loadedCount = 0;
+                let errorCount = 0;
                 let isHeader = true;
                 
                 for (let i = 0; i < lines.length; i++) {
@@ -287,56 +338,115 @@
                     if (line === '') continue;
                     
                     // Skip header
-                    if (isHeader && (line.includes('month') || line.includes('Month'))) {
+                    if (isHeader) {
+                        if (line.includes('month') || line.includes('Month')) {
+                            debug(`Skipping header line ${i}: ${line}`);
+                            isHeader = false;
+                            continue;
+                        }
                         isHeader = false;
-                        continue;
                     }
-                    isHeader = false;
                     
-                    // Split by tab or multiple spaces
-                    let parts;
+                    // Try to parse the line
+                    let parts = [];
+                    
+                    // Try tab first
                     if (line.includes('\t')) {
                         parts = line.split('\t');
-                    } else {
+                    } 
+                    // Try comma
+                    else if (line.includes(',')) {
+                        parts = line.split(',');
+                    } 
+                    // Try multiple spaces
+                    else {
                         parts = line.split(/\s+/);
                     }
                     
                     // Remove empty parts
                     parts = parts.filter(p => p !== '');
                     
-                    if (parts.length < 3) continue;
+                    if (parts.length < 3) {
+                        debug(`Line ${i}: Not enough parts (${parts.length}) - skipping`);
+                        errorCount++;
+                        continue;
+                    }
                     
                     const month = parseInt(parts[0]);
                     const day = parseInt(parts[1]);
                     
-                    if (isNaN(month) || isNaN(day)) continue;
+                    if (isNaN(month) || isNaN(day)) {
+                        debug(`Line ${i}: Invalid month/day - ${parts[0]}, ${parts[1]}`);
+                        errorCount++;
+                        continue;
+                    }
                     
-                    // Get the years part (everything after month and day)
+                    // Get years (everything after month and day)
                     let yearsStr = parts.slice(2).join(' ');
                     
+                    // Remove any quotes
+                    yearsStr = yearsStr.replace(/["']/g, '');
+                    
                     try {
-                        // Parse the array
                         const years = JSON.parse(yearsStr);
+                        
+                        if (!Array.isArray(years)) {
+                            debug(`Line ${i}: Not an array - skipping`);
+                            errorCount++;
+                            continue;
+                        }
+                        
                         const key = `${month}-${day}`;
                         moonData[key] = years;
                         loadedCount++;
+                        
+                        if (loadedCount <= 5) {
+                            debug(`✅ Loaded: ${month}/${day} -> ${years.length} years`);
+                        }
                     } catch (e) {
-                        // Skip invalid entries
+                        debug(`Line ${i}: Failed to parse JSON: ${yearsStr.substring(0, 50)}...`);
+                        errorCount++;
                         continue;
                     }
                 }
                 
-                dataLoaded = true;
-                statusBar.textContent = `✅ Loaded data for ${loadedCount} dates`;
-                statusBar.className = 'status-bar loaded';
-                calcBtn.disabled = false;
+                debug(`\n=== SUMMARY ===`);
+                debug(`✅ Successfully loaded: ${loadedCount} dates`);
+                debug(`❌ Errors: ${errorCount}`);
+                debug(`📊 Total keys: ${Object.keys(moonData).length}`);
+                
+                if (loadedCount > 0) {
+                    const sampleKeys = Object.keys(moonData).slice(0, 10);
+                    debug(`Sample keys: ${sampleKeys.join(', ')}`);
+                    
+                    // Check for September
+                    const sepKeys = Object.keys(moonData).filter(k => k.startsWith('9-'));
+                    debug(`September keys: ${sepKeys.join(', ')}`);
+                    
+                    // Check for 9/1 specifically
+                    if (moonData['9-1']) {
+                        debug(`✅ Found 9/1 with ${moonData['9-1'].length} years`);
+                    } else {
+                        debug(`❌ 9/1 not found`);
+                    }
+                }
+                
+                if (loadedCount > 0) {
+                    dataLoaded = true;
+                    statusBar.textContent = `✅ Loaded data for ${loadedCount} dates`;
+                    statusBar.className = 'status-bar loaded';
+                    calcBtn.disabled = false;
+                } else {
+                    throw new Error('No data was loaded from the CSV');
+                }
                 
             } catch (error) {
                 console.error('Error loading data:', error);
-                statusBar.textContent = '❌ Failed to load moon data. Please refresh the page.';
+                statusBar.textContent = `❌ Error: ${error.message}`;
                 statusBar.className = 'status-bar error';
                 calcBtn.disabled = true;
-                showError('Failed to load moon data. Make sure full_moon_years.csv is in the same folder.');
+                debug(`ERROR: ${error.message}`);
+                showError(`Failed to load data: ${error.message}`);
             }
         }
         
@@ -357,21 +467,19 @@
             const errorDiv = document.getElementById('error');
             errorDiv.classList.remove('show');
             
-            // Check if date is valid
-            const testDate = new Date(2000, month - 1, day);
-            if (testDate.getMonth() !== month - 1) {
-                showError('Invalid date');
-                return;
-            }
-            
             // Look up the data
             const key = `${month}-${day}`;
+            debug(`\nLooking up: ${key}`);
+            
             const years = moonData[key];
             
             if (!years) {
+                debug(`❌ No data found for ${key}`);
                 showError(`No data found for ${month}/${day}`);
                 return;
             }
+            
+            debug(`✅ Found ${years.length} years for ${key}`);
             
             // Display results
             displayResults(month, day, years);
@@ -382,7 +490,6 @@
             const yearList = document.getElementById('yearList');
             const displayDate = document.getElementById('displayDate');
             
-            // Format date
             const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
                                'July', 'August', 'September', 'October', 'November', 'December'];
             displayDate.textContent = `${monthNames[month-1]} ${day}`;
