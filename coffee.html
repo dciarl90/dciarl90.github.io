@@ -5,22 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sunday Morning Coffee Tour</title>
     <style>
+        /* ==========================================================
+           COLORS: loaded from colors.json (see loadColors() below).
+           The values here are only the fallback if that file can't load.
+           ========================================================== */
+        :root {
+            --color-background: rgb(78, 29, 76);   /* page + card background */
+            --color-title: rgb(202, 179, 86);           /* page title (the h1) */
+            --color-shop-name: rgb(202, 179, 86);  /* name of each coffee shop */
+            --color-text: rgb(253, 197, 126);      /* page text, tour date and tour location */
+        }
+
         body {
             font-family: Arial, sans-serif;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
-            background-color: rgb(5, 42, 41);
-            color: black;
+            background-color: var(--color-background);
+            color: var(--color-text);
         }
         h1 {
-            color: rgb(0, 0, 0);
+            color: var(--color-title);
             text-align: center;
             margin-bottom: 30px;
         }
 
         .intro {
-            color: rgb(177, 201, 195);
+            color: var(--color-text);
         }
 
         #coffee-tours {
@@ -29,7 +40,7 @@
         }
 
         .coffee-shop {
-            background-color: rgb(5, 42, 41);
+            background-color: var(--color-background);
             border-radius: 8px;
             padding: 20px;
             margin-bottom: 15px;
@@ -45,16 +56,16 @@
         .name {
             font-size: 1.4em;
             font-weight: bold;
-            color: rgb(177, 201, 195);
+            color: var(--color-shop-name);
             margin-bottom: 5px;
         }
         .date-time {
-            color: rgb(177, 201, 195);
+            color: var(--color-text);
             margin-bottom: 5px;
         }
         .address {
             font-style: normal;
-            color: rgb(177, 201, 195);
+            color: var(--color-text);
         }
         .error {
             color: #d9534f;
@@ -75,7 +86,78 @@
     <div id="coffee-tours"></div>
 
     <script>
+        // Maps keys in colors.json to the CSS variables above
+        const COLOR_VARIABLES = {
+            background: '--color-background',
+            title: '--color-title',
+            shopName: '--color-shop-name',
+            text: '--color-text'
+        };
+
+        // How often to switch to another randomly selected palette.
+        const PALETTE_CYCLE_INTERVAL_MS = 10000000000;
+
+        // Apply one palette from colors.json to the page.
+        function applyPalette(palette, name) {
+            Object.entries(COLOR_VARIABLES).forEach(([key, cssVar]) => {
+                if (palette[key]) {
+                    document.documentElement.style.setProperty(cssVar, palette[key]);
+                }
+            });
+            console.info(`Applied color palette: ${name}`);
+        }
+
+        // Load all palettes, choose one at random, then keep randomly cycling
+        // through the palettes defined in colors.json.
+        async function loadColors() {
+            try {
+                const response = await fetch('colors.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const config = await response.json();
+                const palettes = config.palettes || {};
+                const paletteNames = Object.keys(palettes);
+
+                if (paletteNames.length === 0) {
+                    throw new Error('No palettes found in colors.json');
+                }
+
+                // Keep the URL override for previewing a specific palette.
+                const requested = new URLSearchParams(window.location.search).get('palette');
+                if (requested) {
+                    if (!palettes[requested]) {
+                        throw new Error(`Palette "${requested}" not found in colors.json`);
+                    }
+                    applyPalette(palettes[requested], requested);
+                    return; // A requested preview stays fixed instead of cycling.
+                }
+
+                let lastPaletteName = null;
+
+                function applyRandomPalette() {
+                    // Avoid selecting the same palette twice in a row when possible.
+                    const choices = paletteNames.length > 1
+                        ? paletteNames.filter(name => name !== lastPaletteName)
+                        : paletteNames;
+                    const name = choices[Math.floor(Math.random() * choices.length)];
+
+                    applyPalette(palettes[name], name);
+                    lastPaletteName = name;
+                }
+
+                applyRandomPalette();
+                window.setInterval(applyRandomPalette, PALETTE_CYCLE_INTERVAL_MS);
+            } catch (error) {
+                // Not fatal: the page keeps the fallback colors from the CSS.
+                console.warn('Could not load colors.json, using default colors.', error);
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
+            loadColors();
+
             fetch('coffee_tours.csv')
                 .then(response => {
                     if (!response.ok) {

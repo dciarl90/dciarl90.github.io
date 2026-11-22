@@ -1,0 +1,251 @@
+{
+  "active": "2_224",
+  "palettes": {
+    "plum": {
+      "background": "rgb(78, 29, 76)",
+      "title": "rgb(0, 0, 0)",
+      "shopName": "rgb(202, 179, 86)",
+      "text": "rgb(253, 197, 126)"
+    },
+    "plum2": {
+      "background": "rgb(78, 29, 76)",
+      "title": "rgb(245, 236, 194)",
+      "shopName": "rgb(202, 179, 86)",
+      "text": "rgb(253, 197, 126)"
+    },
+    "wada-1-176": {
+      "background": "rgb(249, 193, 206)",
+      "title": "rgb(120, 205, 208)",
+      "shopName": "rgb(120, 205, 208)",
+      "text": "rgb(253, 212, 189)"
+    },
+    "2_026": {
+      "background": "rgb(202, 179, 86)",
+      "title": "rgb(245, 236, 194)",
+      "shopName": "rgb(78, 29, 76)",
+      "text": "rgb(253, 197, 126)"
+    },
+    "2_032": {
+      "background": "rgb(17, 47, 44)",
+      "title": "rgb(112, 147, 144)",
+      "shopName": "rgb(255, 165, 0)",
+      "text": "rgb(167, 212, 228)"
+    },
+    "2_042": {
+      "background": "rgb(85, 88, 50)",
+      "title": "rgb(253, 191, 104)",
+      "shopName": "rgb(255, 165, 0)",
+      "text": "rgb(129, 146, 56)"
+    },
+    "2_044": {
+      "background": "rgb(6, 79, 110)",
+      "title": "rgb(241, 232, 190)",
+      "shopName": "rgb(165, 200, 209)",
+      "text": "rgb(162, 176, 173)"
+    },
+    "2_049": {
+      "background": "rgb(80, 19, 69)",
+      "title": "rgb(169, 65, 81)",
+      "shopName": "rgb(249, 193, 206)",
+      "text": "rgb(197, 183, 176)"
+    },
+    "2_070": {
+      "background": "rgb(30, 14, 63)",
+      "title": "rgb(67, 119, 66)",
+      "shopName": "rgb(193, 159, 44)",
+      "text": "rgb(195, 206, 157)"
+    },
+    "2_067": {
+      "background": "rgb(30, 14, 63)",
+      "title": "rgb(193, 107, 39)",
+      "shopName": "rgb(226, 181, 64)",
+      "text": "rgb(112, 147, 144)"
+    },
+    "2_0": {
+      "background": "rgb(84, 112, 118)",
+      "title": "rgb(0, 0, 0)",
+      "shopName": "rgb(221, 64, 39)",
+      "text": "rgb(235, 211, 162)"
+    },
+    "2_064": {
+      "background": "rgb(0, 0, 0)",
+      "title": "rgb(84, 112, 118)",
+      "shopName": "rgb(221, 64, 39)",
+      "text": "rgb(235, 211, 162)"
+    },
+    "2_059": {
+      "background": "rgb(101, 53, 20)",
+      "title": "rgb(252, 199, 155)",
+      "shopName": "rgb(180, 205, 194)",
+      "text": "rgb(178, 183, 62)"
+    },
+    "2_053": {
+      "background": "rgb(0, 79, 70)",
+      "title": "rgb(67, 119, 66)",
+      "shopName": "rgb(227, 31, 38)",
+      "text": "rgb(154, 205, 50)"
+    },
+    "2_199": {
+      "background": "rgb(67, 119, 66)",
+      "title": "rgb(217, 102, 41)",
+      "shopName": "rgb(0, 0, 0)",
+      "text": "rgb(255, 255, 255)"
+    },
+    "2_085": {
+      "background": "rgb(0, 0, 0)",
+      "title": "rgb(248, 182, 186)",
+      "shopName": "rgb(181, 222, 204)",
+      "text": "rgb(255, 239, 174)"
+    },
+    "2_086": {
+      "background": "rgb(0, 91, 141)",
+      "title": "rgb(141, 133, 90)",
+      "shopName": "rgb(180, 205, 194)",
+      "text": "rgb(194, 174, 147)"
+    },
+    "2_097": {
+      "background": "rgb(82, 46, 145)",
+      "title": "rgb(221, 64, 39)",
+      "shopName": "rgb(251, 230, 160)",
+      "text": "rgb(216, 163, 123)"
+    },
+    "2_100": {
+      "background": "rgb(0, 113, 144)",
+      "title": "rgb(221, 64, 39)",
+      "shopName": "rgb(252, 179, 21)",
+      "text": "rgb(194, 174, 147)"
+    },
+    "2_114": {
+      "background": "rgb(64, 69, 106)",
+      "title": "rgb(221, 64, 39)",
+      "shopName": "rgb(235, 211, 162)",
+      "text": "rgb(197, 159, 107)"
+    },
+    "2_116": {
+      "background": "rgb(0, 0, 0)",
+      "title": "rgb(182, 191, 193)",
+      "shopName": "rgb(251, 230, 160)",
+      "text": "rgb(0, 144, 138)"
+    },
+    "2_120": {
+      "background": "rgb(113, 59, 76)",
+      "title": "rgb(0, 113, 144)",
+      "shopName": "rgb(255, 255, 0)",
+      "text": "rgb(182, 191, 193)"
+    },
+    "2_124": {
+      "background": "rgb(0, 0, 0)",
+      "title": "rgb(183, 31, 87)",
+      "shopName": "rgb(154, 205, 50)",
+      "text": "rgb(120, 205, 208)"
+    },
+    "2_125": {
+      "background": "rgb(113, 80, 47)",
+      "title": "rgb(0, 0, 0)",
+      "shopName": "rgb(238, 180, 128)",
+      "text": "rgb(112, 147, 144)"
+    },
+    "2_128": {
+      "background": "rgb(0, 0, 0)",
+      "title": "rgb(221, 64, 39)",
+      "shopName": "rgb(100, 143, 123)",
+      "text": "rgb(90, 130, 179)"
+    },
+    "2_131": {
+      "background": "rgb(0, 0, 0)",
+      "title": "rgb(90, 130, 179)",
+      "shopName": "rgb(226, 181, 64)",
+      "text": "rgb(244, 128, 103)"
+    },
+    "2_137": {
+      "background": "rgb(0, 148, 101)",
+      "title": "rgb(171, 36, 57)",
+      "shopName": "rgb(235, 211, 162)",
+      "text": "rgb(255, 255, 255)"
+    },
+    "2_147": {
+      "background": "rgb(226, 181, 64)",
+      "title": "rgb(0, 0, 0)",
+      "shopName": "rgb(0, 147, 165)",
+      "text": "rgb(255, 255, 255)"
+    },
+    "2_148": {
+      "background": "rgb(245, 236, 194)",
+      "title": "rgb(100, 143, 123)",
+      "shopName": "rgb(221, 64, 39)",
+      "text": "rgb(162, 176, 173)"
+    },
+    "2_155": {
+      "background": "rgb(6, 79, 110)",
+      "title": "rgb(113, 59, 76)",
+      "shopName": "rgb(202, 179, 86)",
+      "text": "rgb(152, 111, 45)"
+    },
+    "2_159": {
+      "background": "rgb(192, 169, 179)",
+      "title": "rgb(227, 31, 38)",
+      "shopName": "rgb(138, 43, 226)",
+      "text": "rgb(253, 212, 189)"
+    },
+    "2_162": {
+      "background": "rgb(98, 198, 191)",
+      "title": "rgb(245, 142, 132)",
+      "shopName": "rgb(255, 239, 174)",
+      "text": "rgb(66, 83, 62)"
+    },
+    "2_166": {
+      "background": "rgb(84, 112, 118)",
+      "title": "rgb(9, 145, 151)",
+      "shopName": "rgb(246, 140, 80)",
+      "text": "rgb(255, 255, 0)"
+    },
+    "2_168": {
+      "background": "rgb(193, 159, 44)",
+      "title": "rgb(255, 255, 255)",
+      "shopName": "rgb(9, 145, 151)",
+      "text": "rgb(75, 51, 23)"
+    },
+    "2_178": {
+      "background": "rgb(68, 59, 54)",
+      "title": "rgb(246, 224, 203)",
+      "shopName": "rgb(255, 165, 0)",
+      "text": "rgb(174, 82, 36)"
+    },
+    "2_177": {
+      "background": "rgb(67, 119, 66)",
+      "title": "rgb(174, 82, 36)",
+      "shopName": "rgb(0, 144, 138)",
+      "text": "rgb(199, 209, 79)"
+    },
+    "2_181": {
+      "background": "rgb(204, 18, 54)",
+      "title": "rgb(0, 0, 0)",
+      "shopName": "rgb(252, 179, 21)",
+      "text": "rgb(255, 255, 255)"
+    },
+    "2_184": {
+      "background": "rgb(246, 224, 203)",
+      "title": "rgb(0, 0, 0)",
+      "shopName": "rgb(6, 79, 110)",
+      "text": "rgb(217, 102, 41)"
+    },
+    "2_185": {
+      "background": "rgb(227, 31, 38)",
+      "title": "rgb(26, 116, 68)",
+      "shopName": "rgb(0, 0, 0)",
+      "text": "rgb(226, 181, 64)"
+    },
+    "2_192": {
+      "background": "rgb(242, 114, 145)",
+      "title": "rgb(226, 181, 64)",
+      "shopName": "rgb(182, 191, 193)",
+      "text": "rgb(255, 255, 255)"
+    },
+    "2_224": {
+      "background": "rgb(162, 176, 173)",
+      "title": "rgb(0, 128, 0)",
+      "shopName": "rgb(255, 221, 0)",
+      "text": "rgb(255, 255, 255)"
+    }
+  }
+}
