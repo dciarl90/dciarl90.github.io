@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4e1d4c">
+    <title>Sunday Morning Coffee Tour | Off Season</title>
+    <style>
+        :root {
+            --color-background: rgb(78, 29, 76);
+            --color-title: rgb(202, 179, 86);
+            --color-shop-name: rgb(202, 179, 86);
+            --color-text: rgb(253, 197, 126);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            padding: 28px 20px;
+            display: grid;
+            place-items: center;
+            background: var(--color-background);
+            color: var(--color-text);
+            font-family: Arial, Helvetica, sans-serif;
+            text-align: center;
+            transition: background-color 1.2s ease, color 1.2s ease;
+        }
+
+        main {
+            width: min(100%, 760px);
+            padding: clamp(28px, 7vw, 64px) clamp(22px, 6vw, 58px);
+            border: 1px solid color-mix(in srgb, var(--color-title) 48%, transparent);
+            border-radius: 22px;
+            background: transparent;
+            box-shadow: none;
+            transition: border-color 1.2s ease;
+        }
+
+        .eyebrow {
+            margin: 0 0 16px;
+            color: var(--color-text);
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            margin: 0 0 24px;
+            color: var(--color-title);
+            font-size: clamp(2.1rem, 7vw, 4.25rem);
+            line-height: 1.05;
+            letter-spacing: 0.025em;
+            transition: color 1.2s ease;
+        }
+
+        .message {
+            max-width: 560px;
+            margin: 0 auto;
+            font-size: clamp(1.05rem, 2.6vw, 1.25rem);
+            line-height: 1.7;
+        }
+
+        .message strong {
+            color: var(--color-shop-name);
+            transition: color 1.2s ease;
+        }
+
+        .email-link {
+            display: inline-block;
+            margin: 26px 0 10px;
+            padding: 13px 22px;
+            border: 2px solid var(--color-title);
+            border-radius: 999px;
+            color: var(--color-title);
+            font-size: 1rem;
+            font-weight: 700;
+            text-decoration: none;
+            overflow-wrap: anywhere;
+            transition: color 1.2s ease, border-color 1.2s ease, transform 180ms ease;
+        }
+
+        .email-link:hover,
+        .email-link:focus-visible {
+            transform: translateY(-2px);
+            outline: none;
+            background: var(--color-title);
+            color: var(--color-background);
+        }
+
+        .featured-shop,
+        .tour-suggestions,
+        .tour-stats {
+            margin-top: 42px;
+            padding-top: 26px;
+            border-top: 1px solid color-mix(in srgb, var(--color-title) 55%, transparent);
+        }
+
+        .featured-shop h2,
+        .tour-suggestions h2,
+        .tour-stats h2 {
+            margin: 0 0 18px;
+            color: var(--color-title);
+            font-size: clamp(1.25rem, 4vw, 1.65rem);
+            transition: color 1.2s ease;
+        }
+
+        .shop-list,
+        .suggestion-list {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .shop-list li,
+        .suggestion-list li {
+            padding: 9px 0;
+            color: var(--color-shop-name);
+            font-size: 1.1rem;
+            font-weight: 700;
+            transition: color 1.2s ease;
+        }
+
+        .suggestion-status {
+            margin: 0;
+            color: var(--color-text);
+            font-size: 0.98rem;
+            line-height: 1.5;
+        }
+
+        /* Display tour suggestions in two balanced columns. */
+        .suggestion-list {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            column-gap: 28px;
+            row-gap: 0;
+        }
+
+        .suggestion-list li {
+            overflow-wrap: anywhere;
+        }
+
+        .stats-list {
+            display: inline-block;
+            margin: 0;
+            padding-left: 1.4em;
+            text-align: left;
+            color: var(--color-shop-name);
+            font-size: 1.1rem;
+            font-weight: 700;
+            line-height: 1.9;
+        }
+
+        .stats-list li {
+            padding-left: 0.25em;
+        }
+
+        @media (max-width: 520px) {
+            .suggestion-list {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <p class="eyebrow">Sunday Morning Coffee Tour</p>
+        <h1>Check Back in March 2027!</h1>
+
+        <p class="message">
+            The 2026 coffee tour is finished. Together we visited 20 shops!<br>
+            Help me pick shops for the 2027 tour. Please send your suggestions to my email address below.
+        </p>
+
+        <a class="email-link" href="mailto:dominicciarlette@gmail.com?subject=Coffee%20Shop%20Suggestion">
+            dominicciarlette@gmail.com
+        </a>
+
+        <section class="featured-shop" aria-labelledby="featured-shop-heading">
+            <h2 id="featured-shop-heading">SLC 3-Star Coffee Shops</h2>
+
+            <!-- DEV: Replace these four placeholders with the coffee shop names. -->
+            <ul class="shop-list">
+                <li>Publik Coffee Roaster</li>
+                <li>Three Pines Coffee</li>
+                <!-- <li>[Coffee Shop Name 3]</li>
+                <li>[Coffee Shop Name 4]</li> -->
+            </ul>
+        </section>
+
+        <section class="tour-suggestions" aria-labelledby="tour-suggestions-heading">
+            <h2 id="tour-suggestions-heading">2027 Tour Suggestions (so far)</h2>
+            <p id="suggestion-status" class="suggestion-status" role="status" aria-live="polite">
+                Loading coffee shop suggestions...
+            </p>
+            <ul id="suggestion-list" class="suggestion-list"></ul>
+        </section>
+
+        <section class="tour-stats" aria-labelledby="tour-stats-heading">
+            <h2 id="tour-stats-heading">2026 Tour Stats</h2>
+            <ul class="stats-list">
+                <li>Friends Joined: 9</li>
+                <li>Coffee Shops Visited: 20</li>
+                <li>Otto Guest appearance: 2</li>
+                <li>Double-Doms: 3</li>
+                <li>Flat Tires: 1</li>
+                <li>Helmets Stolen: 1</li>
+            </ul>
+        </section>
+    </main>
+
+    <script>
+        // Uses the same colors.json format as the main coffee tour page:
+        // { "palettes": { "palette name": {
+        //     "background": "...", "title": "...",
+        //     "shopName": "...", "text": "..."
+        // } } }
+        const COLOR_VARIABLES = {
+            background: '--color-background',
+            title: '--color-title',
+            shopName: '--color-shop-name',
+            text: '--color-text'
+        };
+
+        // Change to another randomly selected palette every 30 seconds.
+        const PALETTE_CYCLE_INTERVAL_MS = 30000000;
+
+        function applyPalette(palette, name) {
+            Object.entries(COLOR_VARIABLES).forEach(([key, cssVar]) => {
+                if (palette[key]) {
+                    document.documentElement.style.setProperty(cssVar, palette[key]);
+                }
+            });
+            console.info(`Applied color palette: ${name}`);
+        }
+
+        async function loadColors() {
+            try {
+                const response = await fetch('colors.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const config = await response.json();
+                const palettes = config.palettes || {};
+                const paletteNames = Object.keys(palettes);
+
+                if (paletteNames.length === 0) {
+                    throw new Error('No palettes found in colors.json');
+                }
+
+                // Optional preview: append ?palette=PaletteName to the page URL.
+                const requested = new URLSearchParams(window.location.search).get('palette');
+                if (requested) {
+                    if (!palettes[requested]) {
+                        throw new Error(`Palette "${requested}" not found in colors.json`);
+                    }
+                    applyPalette(palettes[requested], requested);
+                    return; // Keep a requested preview fixed.
+                }
+
+                let lastPaletteName = null;
+
+                function applyRandomPalette() {
+                    const choices = paletteNames.length > 1
+                        ? paletteNames.filter(name => name !== lastPaletteName)
+                        : paletteNames;
+                    const name = choices[Math.floor(Math.random() * choices.length)];
+                    applyPalette(palettes[name], name);
+                    lastPaletteName = name;
+                }
+
+                applyRandomPalette();
+                window.setInterval(applyRandomPalette, PALETTE_CYCLE_INTERVAL_MS);
+            } catch (error) {
+                // The page remains usable with the CSS fallback colors.
+                console.warn('Could not load colors.json; using fallback colors.', error);
+            }
+        }
+
+        // Read the "name" column from coffee_tours.csv in this page's directory.
+        async function loadTourSuggestions() {
+            const status = document.getElementById('suggestion-status');
+            const list = document.getElementById('suggestion-list');
+
+            try {
+                const response = await fetch('coffee_tours.csv');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const csvText = (await response.text()).replace(/^\uFEFF/, '');
+                const rows = parseCSV(csvText);
+
+                if (rows.length === 0) {
+                    status.textContent = 'No tour suggestions have been added yet.';
+                    return;
+                }
+
+                const headers = rows[0].map(header => header.trim().toLowerCase());
+                const nameColumn = headers.indexOf('name');
+
+                if (nameColumn === -1) {
+                    throw new Error('The CSV file must contain a column named "name".');
+                }
+
+                const shopNames = rows
+                    .slice(1)
+                    .map(row => (row[nameColumn] || '').trim())
+                    .filter(name => name.length > 0);
+
+                if (shopNames.length === 0) {
+                    status.textContent = 'No tour suggestions have been added yet.';
+                    return;
+                }
+
+                shopNames.forEach(shopName => {
+                    const item = document.createElement('li');
+                    item.textContent = shopName;
+                    list.appendChild(item);
+                });
+
+                status.textContent = '';
+            } catch (error) {
+                console.error('Could not load coffee tour suggestions:', error);
+                status.textContent =
+                    'Could not load suggestions. Please make sure coffee_tours.csv is in the same folder as this page and includes a "name" column.';
+            }
+        }
+
+        // CSV parser supports quoted fields, commas inside quotes, and escaped quotes.
+        function parseCSV(csvText) {
+            const rows = [];
+            let row = [];
+            let field = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < csvText.length; i++) {
+                const char = csvText[i];
+                const nextChar = csvText[i + 1];
+
+                if (char === '"' && inQuotes && nextChar === '"') {
+                    field += '"';
+                    i++;
+                } else if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    row.push(field);
+                    field = '';
+                } else if ((char === '\n' || char === '\r') && !inQuotes) {
+                    if (char === '\r' && nextChar === '\n') i++;
+                    row.push(field);
+                    if (row.some(value => value.trim() !== '')) rows.push(row);
+                    row = [];
+                    field = '';
+                } else {
+                    field += char;
+                }
+            }
+
+            row.push(field);
+            if (row.some(value => value.trim() !== '')) rows.push(row);
+
+            return rows;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadColors();
+            loadTourSuggestions();
+        });
+    </script>
+</body>
+</html>
